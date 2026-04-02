@@ -19,7 +19,18 @@
         "https://donationalerts.com/*",
         "https://hobot.alwaysdata.net/*",
         "https://streamelements.com/*",
-        "https://open.spotify.com/*"
+        "https://open.spotify.com/*",
+        "https://www.youtube.com/*",
+        "https://youtube.com/*",
+        "https://m.youtube.com/*",
+        "https://music.youtube.com/*",
+        "https://www.youtube-nocookie.com/*",
+        "https://youtu.be/*",
+        "https://soundcloud.com/*",
+        "https://www.soundcloud.com/*",
+        "https://vk.com/*",
+        "https://www.vk.com/*",
+        "https://m.vk.com/*"
       ]
     },
     "background": {
@@ -41,7 +52,18 @@
           "https://donationalerts.com/*",
           "https://hobot.alwaysdata.net/*",
           "https://streamelements.com/*",
-          "https://open.spotify.com/*"
+          "https://open.spotify.com/*",
+          "https://www.youtube.com/*",
+          "https://youtube.com/*",
+          "https://m.youtube.com/*",
+          "https://music.youtube.com/*",
+          "https://www.youtube-nocookie.com/*",
+          "https://youtu.be/*",
+          "https://soundcloud.com/*",
+          "https://www.soundcloud.com/*",
+          "https://vk.com/*",
+          "https://www.vk.com/*",
+          "https://m.vk.com/*"
         ],
         "run_at": "document_idle"
       }
