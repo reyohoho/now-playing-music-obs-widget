@@ -1,0 +1,52 @@
+{
+    "version": "1.0.0",
+    "manifest_version": 3,
+    "name": "OBS now playing",
+    "description": "OBS now playing",
+    "permissions": ["tabs", "tabs"],
+    "host_permissions": [
+      "http://127.0.0.1:4455/*", "http://localhost:4455/*"
+    ],
+    "minimum_chrome_version": "116",
+    "externally_connectable": {
+      "matches": [
+        "https://music.yandex.ru/*",
+        "https://music.yandex.com/*",
+        "https://music.yandex.by/*",
+        "https://music.yandex.kz/*",
+        "https://moo.bot/*",
+        "https://www.donationalerts.com/*",
+        "https://donationalerts.com/*",
+        "https://hobot.alwaysdata.net/*",
+        "https://streamelements.com/*",
+        "https://open.spotify.com/*"
+      ]
+    },
+    "background": {
+    "service_worker": "background.js"
+    },
+    "content_scripts": [
+      {
+        "js": [
+          "content.js"
+        ],
+
+        "matches": [
+          "https://music.yandex.ru/*",
+          "https://music.yandex.com/*",
+          "https://music.yandex.by/*",
+          "https://music.yandex.kz/*",
+          "https://moo.bot/*",
+          "https://www.donationalerts.com/*",
+          "https://donationalerts.com/*",
+          "https://hobot.alwaysdata.net/*",
+          "https://streamelements.com/*",
+          "https://open.spotify.com/*"
+        ],
+        "run_at": "document_idle"
+      }
+    ],
+    "action": {
+      "default_title": "OBS plugin now playing"
+    }
+  }
