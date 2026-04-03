@@ -3,7 +3,7 @@
     "manifest_version": 3,
     "name": "OBS now playing",
     "description": "OBS now playing",
-    "permissions": ["tabs"],
+    "permissions": ["tabs", "storage"],
     "host_permissions": [
       "http://127.0.0.1:4455/*", "http://localhost:4455/*"
     ],
@@ -33,6 +33,7 @@
         "https://m.vk.com/*"
       ]
     },
+    "options_ui": { "page": "options.html", "open_in_tab": true },
     "background": { "service_worker": "background.js" },
     "content_scripts": [
       {

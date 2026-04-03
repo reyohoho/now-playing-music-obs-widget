@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>OBS — настройки</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 28rem; margin: 1rem; line-height: 1.4; }
+    label { display: block; margin-top: 0.6rem; font-weight: 600; }
+    input { width: 100%; box-sizing: border-box; margin-top: 0.2rem; padding: 0.35rem; }
+    button { margin-top: 1rem; padding: 0.45rem 0.9rem; }
+    #status { margin-top: 0.5rem; color: #080; min-height: 1.2em; }
+    .h { font-size: 0.85rem; color: #555; }
+  </style>
+</head>
+<body>
+  <h1>OBS WebSocket</h1>
+  <p class="h">В OBS включите WebSocket-сервер. Имя текстового источника — как в поле ниже.</p>
+  <label>Хост <input id="obsHost" type="text" autocomplete="off" /></label>
+  <label>Порт <input id="obsPort" type="number" min="1" max="65535" /></label>
+  <label>Пароль <input id="obsPassword" type="password" autocomplete="current-password" /></label>
+  <label>Имя текстового источника <input id="obsInputName" type="text" autocomplete="off" /></label>
+  <button type="button" id="save">Сохранить</button>
+  <div id="status"></div>
+  <script src="options.js"></script>
+</body>
+</html>
