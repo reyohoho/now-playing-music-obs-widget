@@ -9,7 +9,6 @@ function getNowPlayingYM() {
         console.log("iddqd", e);
         setTimeout(getNowPlayingYM, 1500);
     }
-
 }
 
 function getNowPlayingMB() {

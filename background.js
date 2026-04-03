@@ -64,7 +64,7 @@ function sendTextToOBS(message){
                 requestId: requestId,
                 requestData: {
                     inputName,
-                    inputSettings: { text: message},
+                    inputSettings: { text: message.toString('utf-8').trim()},
                     overlay: true,
                 }
             }
