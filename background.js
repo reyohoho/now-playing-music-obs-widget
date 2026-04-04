@@ -147,6 +147,7 @@ function obsSendSetText(inputName, line) {
 }
 
 function pushLineToObs(line) {
+  if (line === obs.lastLine) return;
   const now = Date.now();
   if (line === lastLineKey.key && now - lastLineKey.t < 800) return;
   lastLineKey = { key: line, t: now };
