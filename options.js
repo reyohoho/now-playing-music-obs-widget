@@ -7,6 +7,15 @@ const D = {
   obsInputName: "NowPlaying",
 };
 
+const STATE_LABELS = {
+  idle: "Ожидание",
+  connecting: "Подключение",
+  connected: "Подключено",
+  disconnected: "Отключено",
+  disabled: "Выключено",
+  error: "Ошибка",
+};
+
 const $ = (id) => document.getElementById(id);
 
 function orDef(def, x) {
@@ -19,12 +28,70 @@ function orPort(def, x) {
   return n >= 1 && n <= 65535 ? n : def;
 }
 
+let saveTimer = null;
+let currentEnabled = true;
+
+function showSaveStatus(text, isError = false) {
+  const el = $("saveStatus");
+  el.textContent = text || "";
+  el.style.color = isError ? "#b02a37" : "#146c2e";
+  if (saveTimer) clearTimeout(saveTimer);
+  if (text) {
+    saveTimer = setTimeout(() => {
+      el.textContent = "";
+    }, 3500);
+  }
+}
+
+function renderEnabledControls(enabled) {
+  currentEnabled = enabled !== false;
+  $("toggleEnabled").textContent = currentEnabled ? "Отключить" : "Включить";
+  $("reconnect").disabled = !currentEnabled;
+}
+
+function renderObsStatus(s) {
+  const st = s || {};
+  const enabled = st.enabled !== false;
+  const state = String(st.state || (enabled ? "idle" : "disabled"));
+  const stateEl = $("connState");
+  stateEl.textContent = STATE_LABELS[state] || state;
+  stateEl.className = `state ${state}`;
+
+  $("connMessage").textContent = st.message ? String(st.message) : "";
+  $("connTarget").textContent = `${st.configuredHost || D.obsHost}:${st.configuredPort || D.obsPort}`;
+  $("connInput").textContent = st.inputName ? String(st.inputName) : D.obsInputName;
+  $("pwdConfigured").textContent = st.passwordConfigured ? "задан" : "пустой";
+  $("connError").textContent = st.lastError ? `Ошибка: ${st.lastError}` : "";
+  renderEnabledControls(enabled);
+}
+
+function requestObsStatus() {
+  chrome.runtime.sendMessage({ type: "obs:getStatus" }, (resp) => {
+    if (chrome.runtime.lastError) {
+      showSaveStatus("Не удалось запросить статус service worker.", true);
+      return;
+    }
+    if (resp?.status) renderObsStatus(resp.status);
+  });
+}
+
 chrome.storage.sync.get(null, (c) => {
   const v = c || {};
   $("obsHost").value = orDef(D.obsHost, v.obsHost);
   $("obsPort").value = orPort(D.obsPort, v.obsPort);
   $("obsPassword").value = v.obsPassword != null ? String(v.obsPassword) : "";
   $("obsInputName").value = orDef(D.obsInputName, v.obsInputName);
+});
+
+chrome.storage.local.get({ obsStatus: null }, (v) => {
+  renderObsStatus(v.obsStatus);
+});
+requestObsStatus();
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.obsStatus) {
+    renderObsStatus(changes.obsStatus.newValue);
+  }
 });
 
 $("save").addEventListener("click", () => {
@@ -36,10 +103,40 @@ $("save").addEventListener("click", () => {
       obsInputName: $("obsInputName").value.trim() || D.obsInputName,
     },
     () => {
-      $("status").textContent = "Сохранено.";
-      setTimeout(() => {
-        $("status").textContent = "";
-      }, 3000);
+      showSaveStatus("Сохранено. Переподключаюсь…");
+      chrome.runtime.sendMessage({ type: "obs:reconnect" }, () => void chrome.runtime.lastError);
+      requestObsStatus();
+    }
+  );
+});
+
+$("reconnect").addEventListener("click", () => {
+  chrome.runtime.sendMessage({ type: "obs:reconnect" }, (resp) => {
+    if (chrome.runtime.lastError) {
+      showSaveStatus("Не удалось отправить команду переподключения.", true);
+      return;
+    }
+    showSaveStatus("Запрошено переподключение к OBS.");
+    if (resp?.status) renderObsStatus(resp.status);
+    requestObsStatus();
+  });
+});
+
+$("toggleEnabled").addEventListener("click", () => {
+  const nextEnabled = !currentEnabled;
+  chrome.runtime.sendMessage(
+    { type: "obs:setEnabled", enabled: nextEnabled },
+    (resp) => {
+      if (chrome.runtime.lastError || resp?.ok === false) {
+        showSaveStatus("Не удалось изменить режим работы расширения.", true);
+        return;
+      }
+      showSaveStatus(
+        nextEnabled
+          ? "Расширение включено."
+          : "Расширение отключено."
+      );
+      requestObsStatus();
     }
   );
 });
