@@ -1,73 +1,79 @@
 {
-    "version": "1.0.0",
-    "manifest_version": 3,
-    "name": "OBS now playing",
-    "description": "OBS now playing",
-    "permissions": ["tabs", "storage"],
-    "host_permissions": [
-      "http://127.0.0.1:4455/*", "http://localhost:4455/*"
-    ],
-    "minimum_chrome_version": "116",
-    "externally_connectable": {
-      "matches": [
-        "https://music.yandex.ru/*",
-        "https://music.yandex.com/*",
-        "https://music.yandex.by/*",
-        "https://music.yandex.kz/*",
-        "https://moo.bot/*",
-        "https://www.donationalerts.com/*",
-        "https://donationalerts.com/*",
-        "https://hobot.alwaysdata.net/*",
-        "https://streamelements.com/*",
-        "https://open.spotify.com/*",
-        "https://www.youtube.com/*",
-        "https://youtube.com/*",
-        "https://m.youtube.com/*",
-        "https://music.youtube.com/*",
-        "https://www.youtube-nocookie.com/*",
-        "https://youtu.be/*",
-        "https://soundcloud.com/*",
-        "https://www.soundcloud.com/*",
-        "https://vk.com/*",
-        "https://www.vk.com/*",
-        "https://m.vk.com/*"
-      ]
+  "manifest_version": 3,
+  "name": "Now Playing",
+  "description": "Multi-source now playing tracker with OBS bridge",
+  "version": "1.0.0",
+  "minimum_chrome_version": "116",
+  "icons": {
+    "16": "src/assets/icons/16.png",
+    "32": "src/assets/icons/32.png",
+    "48": "src/assets/icons/48.png",
+    "128": "src/assets/icons/128.png"
+  },
+  "permissions": ["tabs", "storage", "identity", "scripting"],
+  "host_permissions": [
+    "<all_urls>",
+    "http://127.0.0.1:4455/*",
+    "http://localhost:4455/*",
+    "https://id.twitch.tv/*",
+    "https://api.twitch.tv/*",
+    "https://irc-ws.chat.twitch.tv/*"
+  ],
+  "action": {
+    "default_title": "Now Playing",
+    "default_icon": {
+      "16": "src/assets/icons/16.png",
+      "32": "src/assets/icons/32.png",
+      "48": "src/assets/icons/48.png"
     },
-    "options_ui": { "page": "options.html", "open_in_tab": true },
-    "background": { "service_worker": "background.js" },
-    "content_scripts": [
-      {
-        "js": [
-          "content.js"
-        ],
-
-        "matches": [
-          "https://music.yandex.ru/*",
-          "https://music.yandex.com/*",
-          "https://music.yandex.by/*",
-          "https://music.yandex.kz/*",
-          "https://moo.bot/*",
-          "https://www.donationalerts.com/*",
-          "https://donationalerts.com/*",
-          "https://hobot.alwaysdata.net/*",
-          "https://streamelements.com/*",
-          "https://open.spotify.com/*",
-          "https://www.youtube.com/*",
-          "https://youtube.com/*",
-          "https://m.youtube.com/*",
-          "https://music.youtube.com/*",
-          "https://www.youtube-nocookie.com/*",
-          "https://youtu.be/*",
-          "https://soundcloud.com/*",
-          "https://www.soundcloud.com/*",
-          "https://vk.com/*",
-          "https://www.vk.com/*",
-          "https://m.vk.com/*"
-        ],
-        "run_at": "document_idle"
-      }
-    ],
-    "action": {
-      "default_title": "OBS plugin now playing"
+    "default_popup": "src/popup/index.html"
+  },
+  "options_page": "src/options/index.html",
+  "background": {
+    "service_worker": "src/background/serviceWorker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "js": ["src/content/contentScript.js"],
+      "all_frames": true,
+      "run_at": "document_idle",
+      "matches": [
+        "*://music.yandex.ru/*",
+        "*://music.yandex.com/*",
+        "*://music.yandex.by/*",
+        "*://music.yandex.kz/*",
+        "*://open.spotify.com/*",
+        "*://www.youtube.com/*",
+        "*://youtube.com/*",
+        "*://m.youtube.com/*",
+        "*://music.youtube.com/*",
+        "*://www.youtube-nocookie.com/*",
+        "*://youtu.be/*",
+        "*://soundcloud.com/*",
+        "*://www.soundcloud.com/*",
+        "*://zvuk.com/*",
+        "*://www.zvuk.com/*",
+        "*://vk.com/*",
+        "*://www.vk.com/*",
+        "*://m.vk.com/*"
+      ]
     }
-  }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/widget/index.html",
+        "src/widget/main.js",
+        "src/widget/styles.css",
+        "src/content/vkPageBridge.js",
+        "src/content/soundcloudPageBridge.js",
+        "src/content/youtubePageBridge.js",
+        "src/content/youtubeMusicPageBridge.js",
+        "src/content/zvukPageBridge.js",
+        "src/content/webMediaPageBridge.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

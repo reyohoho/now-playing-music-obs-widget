@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dev/
+dist/
+coverage/
+.vite/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Chrome extension artifacts / secrets
+*.crx
+*.pem
+*.zip
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editors / IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+
+# Test cache
+.vitest/
