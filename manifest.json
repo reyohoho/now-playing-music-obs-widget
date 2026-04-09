@@ -63,9 +63,11 @@
   "web_accessible_resources": [
     {
       "resources": [
+        "assets/*",
         "src/widget/index.html",
         "src/widget/main.js",
         "src/widget/styles.css",
+        "src/content/contentScript.js",
         "src/content/vkPageBridge.js",
         "src/content/soundcloudPageBridge.js",
         "src/content/youtubePageBridge.js",
