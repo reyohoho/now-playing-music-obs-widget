@@ -1,0 +1,418 @@
+{
+  "services": {
+    "obs": "OBS",
+    "twitch": "Twitch"
+  },
+  "status": {
+    "connected": "подключено",
+    "connecting": "подключение",
+    "disconnected": "отключено",
+    "disabled": "выключено",
+    "error": "ошибка",
+    "idle": "ожидание",
+    "unknown": "неизвестно",
+    "noData": "нет данных"
+  },
+  "playbackState": {
+    "playing": "играет",
+    "paused": "пауза",
+    "ended": "завершено",
+    "idle": "ожидание"
+  },
+  "statusMessages": {
+    "obs": {
+      "disabled": "Интеграция OBS выключена."
+    },
+    "twitch": {
+      "disabled": "Интеграция Twitch выключена."
+    }
+  },
+  "popup": {
+    "appTitle": "Now Playing",
+    "primary": {
+      "empty": "—",
+      "untitled": "(без названия)"
+    },
+    "errors": {
+      "backgroundNoResponse": "Нет ответа от фонового service worker.",
+      "sourcesListUnavailable": "Список недоступен из-за ошибки связи с фоновым сервисом.",
+      "backgroundConnection": "Ошибка связи с фоновым сервисом: {error}"
+    },
+    "toggles": {
+      "on": "Вкл",
+      "twitchControl": "Управление с Twitch",
+      "twitchAnnounce": "Анонсы",
+      "allowGenericWebInjection": "Встраивать везде"
+    },
+    "settings": "Настройки",
+    "wrapper": {
+      "addFromTab": "Добавить custom source",
+      "actions": {
+        "menu": "Действия custom source",
+        "edit": "Редактировать",
+        "delete": "Удалить"
+      },
+      "form": {
+        "titleCreate": "Добавить custom source",
+        "titleEdit": "Редактировать custom source",
+        "saveCreate": "Добавить",
+        "saveEdit": "Сохранить",
+        "cancel": "Отмена",
+        "fields": {
+          "label": "Название",
+          "host": "Host",
+          "pathRegex": "Path regex",
+          "enabled": "Включено",
+          "childSources": "Child sources",
+          "controlSelectors": "Селекторы управления"
+        },
+        "controlActions": {
+          "play": "Play",
+          "pause": "Pause",
+          "toggle": "Toggle",
+          "next": "Next",
+          "previous": "Previous",
+          "volume": "Volume",
+          "mute": "Mute",
+          "unmute": "Unmute",
+          "muteToggle": "Mute toggle"
+        },
+        "placeholders": {
+          "label": "StreamElements",
+          "host": "streamelements.com",
+          "pathRegex": "^/dashboard/mediarequest(?:\\?.*)?$",
+          "selector": ".songrequest-player-actions-icon-skip"
+        }
+      },
+      "messages": {
+        "ruleNotFound": "Правило custom source не найдено.",
+        "saveFailed": "Не удалось сохранить custom source.",
+        "deleteFailed": "Не удалось удалить custom source.",
+        "saved": "Custom source обновлён.",
+        "created": "Custom source добавлен.",
+        "deleted": "Custom source удалён."
+      },
+      "validation": {
+        "hostRequired": "Host обязателен.",
+        "childSourcesRequired": "Нужно выбрать хотя бы один child source.",
+        "invalidRegex": "Невалидный Path regex: {error}"
+      },
+      "picker": {
+        "pickShort": "Выбрать",
+        "pickingShort": "...",
+        "started": "Режим выбора включён. Наведите и кликните по элементу.",
+        "selected": "Селектор сохранён для {action}.",
+        "errors": {
+          "noActiveTab": "Не найдена активная вкладка для выбора.",
+          "noCompatibleTab": "Не найдена совместимая вкладка. Откройте поддерживаемый сайт (YouTube Music/YouTube/Spotify и т.д.) и повторите.",
+          "startFailed": "Не удалось запустить выбор: {error}"
+        }
+      }
+    },
+    "source": {
+      "enableAria": "Включить источник {label}",
+      "ignoreBulkMuteAria": "Игнорировать общий mute/unmute для источника {label}",
+      "playingFallback": "идет воспроизведение",
+      "noActivity": "нет активности"
+    },
+    "activeSources": {
+      "title": "Активные источники",
+      "empty": "Сейчас нет активных источников.",
+      "bulkMute": {
+        "muteAria": "Выключить звук у всех активных источников",
+        "unmuteAria": "Включить звук у всех активных источников",
+        "noneToMute": "Все активные источники уже без звука.",
+        "muteFailed": "Не удалось выключить звук у активных источников.",
+        "unmuteFailed": "Не удалось включить звук у выбранных источников.",
+        "muted": "Звук выключен: {count}",
+        "unmuted": "Звук включён: {count}",
+        "mutedPartial": "Выключен звук у {okCount} из {total}.",
+        "unmutedPartial": "Включён звук у {okCount} из {total}."
+      }
+    },
+    "track": {
+      "primary": "Главный источник",
+      "setPrimary": "Сделать главным источником",
+      "position": "Позиция трека",
+      "volume": "Громкость",
+      "untitled": "(без названия)",
+      "live": "Эфир"
+    },
+    "trackMenu": {
+      "actions": "Действия источника",
+      "createSource": "Создать источник",
+      "editSource": "Редактировать источник",
+      "copyName": "Копировать название",
+      "copyNameCopied": "Название скопировано.",
+      "copyNameEmpty": "Нет данных для копирования.",
+      "copyNameFailed": "Не удалось скопировать: {error}",
+      "copyLink": "Копировать ссылку",
+      "copyLinkCopied": "Ссылка скопирована.",
+      "copyLinkEmpty": "Ссылка недоступна для этого источника.",
+      "copyLinkFailed": "Не удалось скопировать ссылку: {error}",
+      "openTab": "Перейти",
+      "closeTab": "Закрыть"
+    },
+    "controls": {
+      "previous": "Предыдущий трек",
+      "play": "Воспроизвести",
+      "pause": "Пауза",
+      "next": "Следующий трек",
+      "mute": "Выключить звук",
+      "unmute": "Включить звук",
+      "unsupported": "Для этого источника недоступно"
+    },
+    "swipe": {
+      "closeTab": "Закрыть вкладку",
+      "tabMissing": "Не удалось закрыть вкладку: отсутствует tab id.",
+      "stopPlaybackFailed": "Не удалось остановить воспроизведение перед закрытием: {error}",
+      "stopPlaybackTimeout": "Не удалось дождаться остановки воспроизведения.",
+      "closeTabCanceled": "Закрытие вкладки отменено пользователем.",
+      "closeTabFailed": "Не удалось закрыть вкладку: {error}"
+    }
+  },
+  "options": {
+    "common": {
+      "empty": "—",
+      "none": "нет",
+      "unknown": "неизвестно"
+    },
+    "title": "Now Playing — настройки",
+    "sections": {
+      "status": "Состояние",
+      "personalization": "Персонализация",
+      "wrapperSources": "Сохранённые источники",
+      "obs": "OBS",
+      "twitch": "Twitch",
+      "debug": "Отладка"
+    },
+    "errors": {
+      "loadSettings": "Не удалось загрузить настройки."
+    },
+    "toasts": {
+      "saveError": "Ошибка сохранения.",
+      "saved": "Сохранено",
+      "noDataToCopy": "Нет данных для копирования.",
+      "twitchReconnected": "Twitch переподключён.",
+      "twitchStatusUpdated": "Состояние Twitch обновлено.",
+      "twitchStatusFailed": "Не удалось получить статус Twitch.",
+      "clientIdSaveFailed": "Не удалось сохранить Client ID Twitch.",
+      "twitchOAuthError": "Ошибка OAuth Twitch.",
+      "twitchOAuthDone": "OAuth выполнен: {username}."
+    },
+    "validation": {
+      "triggerRequired": "Триггер не должен быть пустым.",
+      "triggerNoSpaces": "Триггер не должен содержать пробелы.",
+      "aliasConflict": "Алиас \"{alias}\" используется в нескольких командах.",
+      "commandAliasRequired": "Команда {commandId} должна иметь хотя бы один алиас."
+    },
+    "status": {
+      "broadcast": "Трансляция активного",
+      "liveVideoCoversInPopup": "Показывать превью видео в попапе",
+      "liveVideoCoversInPopupHint": "",
+      "tracking": "Вкл",
+      "allowGenericWebInjection": "Встраивание на всех сайтах (экспериментально)",
+      "allowGenericWebInjectionHint": "Если выключено, расширение работает только на встроенных источниках и host из wrapper-правил.",
+      "currentSource": "Текущий источник",
+      "currentLine": "Текущая строка"
+    },
+    "personalization": {
+      "language": "Язык",
+      "languages": {
+        "ru": "Русский",
+        "en": "Английский"
+      },
+      "themeMode": "Режим темы",
+      "themeModes": {
+        "system": "Системная",
+        "light": "Светлая",
+        "dark": "Тёмная"
+      },
+      "accentColor": "Акцентный цвет",
+      "showNowPlayingBlockInPopup": "Показывать блок Now Playing в диалоге",
+      "liveVideoCoversInPopup": "Показывать превью видео в попапе",
+      "liveVideoCoversInPopupHint": "",
+      "allowGenericWebInjection": "Встраивание на всех сайтах (экспериментально)",
+      "allowGenericWebInjectionHint": "Если выключено, расширение работает только на встроенных источниках и host из wrapper-правил.",
+      "appliesTo": "Настройки применяются к всплывающему окну и виджету."
+    },
+    "wrapperSources": {
+      "hint": "",
+      "empty": "Сохранённые источники пока не добавлены.",
+      "fields": {
+        "enabled": "Включено",
+        "host": "Хост",
+        "pathRegex": "Path regex",
+        "label": "Название",
+        "childSources": "Дочерние источники",
+        "controlSelectors": "Селекторы управления",
+        "volumeMode": "Режим громкости",
+        "autoPrimary": "Разрешить автоустановку главным",
+        "shortVideoFilterSec": "Фильтр коротких видео (сек, 0 = выкл)",
+        "ignoreBulkMute": "Игнорировать общий mute/unmute для этого источника"
+      },
+      "volumeControlModes": {
+        "auto": "Авто",
+        "click": "Клик",
+        "press": "Нажатие",
+        "drag": "Перетаскивание",
+        "range": "Range input",
+        "noui": "noUi"
+      },
+      "controlActions": {
+        "play": "Воспроизведение",
+        "pause": "Пауза",
+        "toggle": "Переключить",
+        "next": "Следующий",
+        "previous": "Предыдущий",
+        "volume": "Громкость",
+        "mute": "Выключить звук",
+        "unmute": "Включить звук",
+        "muteToggle": "Переключить звук"
+      },
+      "placeholders": {
+        "host": "streamelements.com",
+        "pathRegex": "^/dashboard/mediarequest",
+        "label": "StreamElements",
+        "selector": ".songrequest-player-actions-icon-skip"
+      },
+      "actions": {
+        "fromCurrentTab": "Из текущей вкладки",
+        "add": "Добавить правило",
+        "edit": "Редактировать",
+        "delete": "Удалить",
+        "run": "Выполнить действие",
+        "usePathRegexTemplate": "Подставить Path regex текущей страницы"
+      },
+      "toasts": {
+        "created": "Wrapper-правило создано: {label}.",
+        "alreadyExists": "Wrapper-правило уже существует: {label}.",
+        "createFailed": "Не удалось создать wrapper-правило из текущей вкладки.",
+        "runSuccess": "Действие выполнено: {action}.",
+        "runFailed": "Не удалось выполнить действие {action}: {error}"
+      },
+      "validation": {
+        "regexAny": "Пустой Path regex означает: матчить весь host.",
+        "invalidRegex": "Невалидный regex: {error}"
+      },
+      "picker": {
+        "pickAction": "Выбрать элемент с активной вкладки",
+        "pickShort": "Выбрать",
+        "pickingShort": "...",
+        "started": "Режим выбора включён. Наведите и кликните по элементу.",
+        "selected": "Селектор сохранён для {action}.",
+        "errors": {
+          "noActiveTab": "Не найдена активная вкладка для выбора.",
+          "startFailed": "Не удалось запустить выбор: {error}"
+        }
+      },
+      "overlay": {
+        "opened": "Редактор открыт на выбранной вкладке.",
+        "errors": {
+          "noCompatibleTab": "Не найдена совместимая вкладка. Откройте поддерживаемый сайт (YouTube Music/YouTube/Spotify и т.д.) и повторите.",
+          "startFailed": "Не удалось открыть редактор: {error}"
+        }
+      }
+    },
+    "obs": {
+      "enabled": "Включить интеграцию OBS",
+      "reconnect": "Переподключить OBS",
+      "fields": {
+        "host": "Хост",
+        "port": "Порт",
+        "password": "Пароль",
+        "textSourceName": "Имя Text Source",
+        "textTemplate": "Шаблон текста",
+        "browserEventEnabled": "Отправлять событие obs-browser",
+        "browserEventName": "Имя события"
+      },
+      "display": {
+        "textSource": "Вариант отображения: Текст",
+        "browserSource": "Вариант отображения: Встроенный браузер"
+      },
+      "callout": {
+        "changeTextSource": "Перед тем как менять текстовый источник в самом OBS - выключите трансляцию в этом расширении, т.к. иначе это вызывает падение OBS.",
+        "browserLocalFileInfo": "Для источника браузера используется локальный HTML файл, инструкция по настройке на странице приложения."
+      },
+      "guide": {
+        "step1": "Включите WebSocket сервер в OBS.",
+        "step2": "Создайте Text Source и укажите его имя в поле «Имя Text Source» выше.",
+        "step3": "Создайте Browser Source и вставьте URL виджета через кнопку ниже.",
+        "step4": "Для расширенных обновлений включите отправку события obs-browser."
+      },
+      "actions": {
+        "widgetUrl": "URL виджета",
+        "copyWidgetUrlAria": "Скопировать URL виджета",
+        "eventName": "Имя события",
+        "textTemplate": "Шаблон текста"
+      },
+      "toasts": {
+        "widgetUrlCopied": "URL виджета скопирован.",
+        "eventNameCopied": "Имя события скопировано.",
+        "textTemplateCopied": "Шаблон текста скопирован."
+      }
+    },
+    "twitch": {
+      "enabled": "Включить интеграцию Twitch",
+      "controlEnabled": "Включить управление из Twitch",
+      "announceEnabled": "Включить анонсы в чат",
+      "callout": {
+        "moderationRisk": "На текущий момент расширение не ограничивает вывод запрещённых слов, используйте на свой страх и риск."
+      },
+      "fields": {
+        "channel": "Канал",
+        "commandRouter": "Команды",
+        "trigger": "Триггер",
+        "commands": "Команды",
+        "globalAllowedSources": "Глобально разрешённые источники",
+        "username": "Имя пользователя (бот/юзер)",
+        "clientId": "Client ID (для OAuth)",
+        "oauthToken": "OAuth токен",
+        "announceMinInterval": "Мин. интервал анонса (мс)",
+        "announceIntervalAria": "Интервал анонса",
+        "announceTemplate": "Шаблон анонса",
+        "log": "Журнал Twitch"
+      },
+      "placeholders": {
+        "channel": "channel_name",
+        "trigger": "!ww",
+        "aliases": "alias1,alias2",
+        "users": "user1,user2",
+        "deniedUser": "blocked_user",
+        "sources": "youtube,spotify"
+      },
+      "table": {
+        "enabled": "Вкл",
+        "canonical": "Команда",
+        "aliases": "Алиасы",
+        "arg": "Аргумент",
+        "accessMode": "Режим доступа",
+        "allowedRoles": "Разрешённые роли",
+        "allowedUsers": "Разрешённые пользователи",
+        "deniedUsers": "Запрещённые пользователи",
+        "sourcesOverride": "Переопределение источников"
+      },
+      "accessModes": {
+        "roles": "роли",
+        "users": "пользователи",
+        "everyone": "все"
+      },
+      "rateLimit": {
+        "global": "Глобальный rate limit (мс)",
+        "perUser": "Rate limit на пользователя (мс)",
+        "perCommand": "Rate limit на команду (мс)"
+      },
+      "actions": {
+        "oauthAuthorize": "OAuth авторизация",
+        "reconnect": "Переподключить Twitch",
+        "refreshStatusAria": "Обновить статус Twitch"
+      }
+    },
+    "debug": {
+      "enable": "Включить режим отладки (подробные логи)",
+      "hint": "Логи пишутся в консоль страницы источника и в service worker расширения.",
+      "channel": "Диагностический канал",
+      "channelEmpty": "Нет диагностических событий."
+    }
+  }
+}

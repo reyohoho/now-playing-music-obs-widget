@@ -1,0 +1,418 @@
+{
+  "services": {
+    "obs": "OBS",
+    "twitch": "Twitch"
+  },
+  "status": {
+    "connected": "connected",
+    "connecting": "connecting",
+    "disconnected": "disconnected",
+    "disabled": "disabled",
+    "error": "error",
+    "idle": "idle",
+    "unknown": "unknown",
+    "noData": "no data"
+  },
+  "playbackState": {
+    "playing": "playing",
+    "paused": "paused",
+    "ended": "ended",
+    "idle": "idle"
+  },
+  "statusMessages": {
+    "obs": {
+      "disabled": "OBS integration is disabled."
+    },
+    "twitch": {
+      "disabled": "Twitch integration is disabled."
+    }
+  },
+  "popup": {
+    "appTitle": "Now Playing",
+    "primary": {
+      "empty": "—",
+      "untitled": "(untitled)"
+    },
+    "errors": {
+      "backgroundNoResponse": "No response from background service worker.",
+      "sourcesListUnavailable": "The sources list is unavailable because of background connection error.",
+      "backgroundConnection": "Background connection error: {error}"
+    },
+    "toggles": {
+      "on": "On",
+      "twitchControl": "Twitch Control",
+      "twitchAnnounce": "Announce",
+      "allowGenericWebInjection": "Embed everywhere"
+    },
+    "settings": "Settings",
+    "wrapper": {
+      "addFromTab": "Add custom source",
+      "actions": {
+        "menu": "Custom source actions",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "form": {
+        "titleCreate": "Add custom source",
+        "titleEdit": "Edit custom source",
+        "saveCreate": "Add",
+        "saveEdit": "Save",
+        "cancel": "Cancel",
+        "fields": {
+          "label": "Label",
+          "host": "Host",
+          "pathRegex": "Path regex",
+          "enabled": "Enabled",
+          "childSources": "Child sources",
+          "controlSelectors": "Control selectors"
+        },
+        "controlActions": {
+          "play": "Play",
+          "pause": "Pause",
+          "toggle": "Toggle",
+          "next": "Next",
+          "previous": "Previous",
+          "volume": "Volume",
+          "mute": "Mute",
+          "unmute": "Unmute",
+          "muteToggle": "Mute toggle"
+        },
+        "placeholders": {
+          "label": "StreamElements",
+          "host": "streamelements.com",
+          "pathRegex": "^/dashboard/mediarequest(?:\\?.*)?$",
+          "selector": ".songrequest-player-actions-icon-skip"
+        }
+      },
+      "messages": {
+        "ruleNotFound": "Custom source rule was not found.",
+        "saveFailed": "Failed to save custom source.",
+        "deleteFailed": "Failed to delete custom source.",
+        "saved": "Custom source updated.",
+        "created": "Custom source created.",
+        "deleted": "Custom source deleted."
+      },
+      "validation": {
+        "hostRequired": "Host is required.",
+        "childSourcesRequired": "Select at least one child source.",
+        "invalidRegex": "Invalid Path regex: {error}"
+      },
+      "picker": {
+        "pickShort": "Pick",
+        "pickingShort": "...",
+        "started": "Picker started. Hover and click an element.",
+        "selected": "Selector captured for {action}.",
+        "errors": {
+          "noActiveTab": "No active tab available for picking.",
+          "noCompatibleTab": "No compatible tab found. Open a supported site tab (YouTube Music/YouTube/Spotify/etc.) and try again.",
+          "startFailed": "Failed to start picker: {error}"
+        }
+      }
+    },
+    "source": {
+      "enableAria": "Enable source {label}",
+      "ignoreBulkMuteAria": "Ignore global mute/unmute for source {label}",
+      "playingFallback": "playing now",
+      "noActivity": "no activity"
+    },
+    "activeSources": {
+      "title": "Active sources",
+      "empty": "There are no active sources right now.",
+      "bulkMute": {
+        "muteAria": "Mute all active sources",
+        "unmuteAria": "Unmute all active sources",
+        "noneToMute": "All active sources are already muted.",
+        "muteFailed": "Failed to mute active sources.",
+        "unmuteFailed": "Failed to unmute selected sources.",
+        "muted": "Muted: {count}",
+        "unmuted": "Unmuted: {count}",
+        "mutedPartial": "Muted {okCount} of {total}.",
+        "unmutedPartial": "Unmuted {okCount} of {total}."
+      }
+    },
+    "track": {
+      "primary": "Primary source",
+      "setPrimary": "Set as primary source",
+      "position": "Track position",
+      "volume": "Volume",
+      "untitled": "(untitled)",
+      "live": "Live"
+    },
+    "trackMenu": {
+      "actions": "Source actions",
+      "createSource": "Create source",
+      "editSource": "Edit source",
+      "copyName": "Copy track name",
+      "copyNameCopied": "Track name copied.",
+      "copyNameEmpty": "Nothing to copy.",
+      "copyNameFailed": "Failed to copy: {error}",
+      "copyLink": "Copy track link",
+      "copyLinkCopied": "Track link copied.",
+      "copyLinkEmpty": "Track link is unavailable for this source.",
+      "copyLinkFailed": "Failed to copy track link: {error}",
+      "openTab": "Go to tab",
+      "closeTab": "Close tab"
+    },
+    "controls": {
+      "previous": "Previous track",
+      "play": "Play",
+      "pause": "Pause",
+      "next": "Next track",
+      "mute": "Mute",
+      "unmute": "Unmute",
+      "unsupported": "Unavailable for this source"
+    },
+    "swipe": {
+      "closeTab": "Close tab",
+      "tabMissing": "Could not close tab: tab id is missing.",
+      "stopPlaybackFailed": "Could not stop playback before closing: {error}",
+      "stopPlaybackTimeout": "Could not confirm playback stopped before closing.",
+      "closeTabCanceled": "Tab close was canceled by the user.",
+      "closeTabFailed": "Could not close tab: {error}"
+    }
+  },
+  "options": {
+    "common": {
+      "empty": "—",
+      "none": "none",
+      "unknown": "unknown"
+    },
+    "title": "Now Playing — settings",
+    "sections": {
+      "status": "Status",
+      "personalization": "Personalization",
+      "wrapperSources": "Saved sources",
+      "obs": "OBS",
+      "twitch": "Twitch",
+      "debug": "Debug"
+    },
+    "errors": {
+      "loadSettings": "Failed to load settings."
+    },
+    "toasts": {
+      "saveError": "Save failed.",
+      "saved": "Saved",
+      "noDataToCopy": "Nothing to copy.",
+      "twitchReconnected": "Twitch reconnected.",
+      "twitchStatusUpdated": "Twitch status updated.",
+      "twitchStatusFailed": "Failed to get Twitch status.",
+      "clientIdSaveFailed": "Failed to save Twitch Client ID.",
+      "twitchOAuthError": "Twitch OAuth error.",
+      "twitchOAuthDone": "OAuth completed: {username}."
+    },
+    "validation": {
+      "triggerRequired": "Trigger must not be empty.",
+      "triggerNoSpaces": "Trigger must not contain spaces.",
+      "aliasConflict": "Alias \"{alias}\" is used by multiple commands.",
+      "commandAliasRequired": "Command {commandId} must have at least one alias."
+    },
+    "status": {
+      "broadcast": "Active broadcast",
+      "liveVideoCoversInPopup": "Show video preview in popup",
+      "liveVideoCoversInPopupHint": "",
+      "tracking": "On",
+      "allowGenericWebInjection": "Inject on all sites",
+      "allowGenericWebInjectionHint": "When disabled, the extension runs only on built-in sources and hosts from wrapper rules.",
+      "currentSource": "Current source",
+      "currentLine": "Current line"
+    },
+    "personalization": {
+      "language": "Language",
+      "languages": {
+        "ru": "Russian",
+        "en": "English"
+      },
+      "themeMode": "Theme mode",
+      "themeModes": {
+        "system": "System",
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "accentColor": "Accent color",
+      "showNowPlayingBlockInPopup": "Show Now Playing block in popup",
+      "liveVideoCoversInPopup": "Show video preview in popup",
+      "liveVideoCoversInPopupHint": "",
+      "allowGenericWebInjection": "Inject on all sites",
+      "allowGenericWebInjectionHint": "When disabled, the extension runs only on built-in sources and hosts from wrapper rules.",
+      "appliesTo": "Settings are applied to popup and widget."
+    },
+    "wrapperSources": {
+      "hint": "",
+      "empty": "No saved sources yet.",
+      "fields": {
+        "enabled": "Enabled",
+        "host": "Host",
+        "pathRegex": "Path regex",
+        "label": "Label",
+        "childSources": "Child sources",
+        "controlSelectors": "Control selectors",
+        "volumeMode": "Volume mode",
+        "autoPrimary": "Allow auto-set as primary",
+        "shortVideoFilterSec": "Short video filter (sec, 0 = off)",
+        "ignoreBulkMute": "Ignore global mute/unmute for this source"
+      },
+      "volumeControlModes": {
+        "auto": "Auto",
+        "click": "Click",
+        "press": "Press",
+        "drag": "Drag",
+        "range": "Range",
+        "noui": "noUi"
+      },
+      "controlActions": {
+        "play": "Play",
+        "pause": "Pause",
+        "toggle": "Toggle",
+        "next": "Next",
+        "previous": "Previous",
+        "volume": "Volume",
+        "mute": "Mute",
+        "unmute": "Unmute",
+        "muteToggle": "Mute toggle"
+      },
+      "placeholders": {
+        "host": "streamelements.com",
+        "pathRegex": "^/dashboard/mediarequest",
+        "label": "StreamElements",
+        "selector": ".songrequest-player-actions-icon-skip"
+      },
+      "actions": {
+        "fromCurrentTab": "From current tab",
+        "add": "Add rule",
+        "edit": "Edit",
+        "delete": "Delete",
+        "run": "Run action",
+        "usePathRegexTemplate": "Apply current page Path regex"
+      },
+      "toasts": {
+        "created": "Wrapper rule created: {label}.",
+        "alreadyExists": "Wrapper rule already exists: {label}.",
+        "createFailed": "Failed to create wrapper rule from current tab.",
+        "runSuccess": "Action executed: {action}.",
+        "runFailed": "Failed to execute action {action}: {error}"
+      },
+      "validation": {
+        "regexAny": "Empty Path regex means: match the whole host.",
+        "invalidRegex": "Invalid regex: {error}"
+      },
+      "picker": {
+        "pickAction": "Pick element from active tab",
+        "pickShort": "Pick",
+        "pickingShort": "...",
+        "started": "Picker started. Hover and click an element.",
+        "selected": "Selector captured for {action}.",
+        "errors": {
+          "noActiveTab": "No active tab available for picking.",
+          "startFailed": "Failed to start picker: {error}"
+        }
+      },
+      "overlay": {
+        "opened": "Editor opened on the selected tab.",
+        "errors": {
+          "noCompatibleTab": "No compatible tab found. Open a supported site tab (YouTube Music/YouTube/Spotify/etc.) and try again.",
+          "startFailed": "Failed to open editor: {error}"
+        }
+      }
+    },
+    "obs": {
+      "enabled": "Enable OBS integration",
+      "reconnect": "Reconnect OBS",
+      "fields": {
+        "host": "Host",
+        "port": "Port",
+        "password": "Password",
+        "textSourceName": "Text Source name",
+        "textTemplate": "Text template",
+        "browserEventEnabled": "Send obs-browser event",
+        "browserEventName": "Event name"
+      },
+      "display": {
+        "textSource": "Display mode: Text",
+        "browserSource": "Display mode: Embedded browser"
+      },
+      "callout": {
+        "changeTextSource": "Before changing the text source in OBS itself, disable broadcast in this extension, otherwise OBS may crash.",
+        "browserLocalFileInfo": "Browser Source uses a local HTML file; setup instructions are on the app settings page."
+      },
+      "guide": {
+        "step1": "Enable the WebSocket server in OBS.",
+        "step2": "Create a Text Source and set its name in the Text Source name field above.",
+        "step3": "Create a Browser Source and paste the widget URL using the button below.",
+        "step4": "Enable Send obs-browser event for rich updates."
+      },
+      "actions": {
+        "widgetUrl": "Widget URL",
+        "copyWidgetUrlAria": "Copy widget URL",
+        "eventName": "Event name",
+        "textTemplate": "Text template"
+      },
+      "toasts": {
+        "widgetUrlCopied": "Widget URL copied.",
+        "eventNameCopied": "Event name copied.",
+        "textTemplateCopied": "Text template copied."
+      }
+    },
+    "twitch": {
+      "enabled": "Enable Twitch integration",
+      "controlEnabled": "Enable mod-control",
+      "announceEnabled": "Enable chat announce",
+      "callout": {
+        "moderationRisk": "Currently the system does not filter prohibited words in output; use at your own risk."
+      },
+      "fields": {
+        "channel": "Channel",
+        "commandRouter": "Commands",
+        "trigger": "Trigger",
+        "commands": "Commands",
+        "globalAllowedSources": "Global allowed sources",
+        "username": "Username (bot/user)",
+        "clientId": "Client ID (for OAuth)",
+        "oauthToken": "OAuth token",
+        "announceMinInterval": "Announce min interval (ms)",
+        "announceIntervalAria": "Announce interval",
+        "announceTemplate": "Announce template",
+        "log": "Twitch log"
+      },
+      "placeholders": {
+        "channel": "channel_name",
+        "trigger": "!ww",
+        "aliases": "alias1,alias2",
+        "users": "user1,user2",
+        "deniedUser": "blocked_user",
+        "sources": "youtube,spotify"
+      },
+      "table": {
+        "enabled": "Enabled",
+        "canonical": "Canonical",
+        "aliases": "Aliases",
+        "arg": "Arg",
+        "accessMode": "Access mode",
+        "allowedRoles": "Allowed roles",
+        "allowedUsers": "Allowed users",
+        "deniedUsers": "Denied users",
+        "sourcesOverride": "Sources override"
+      },
+      "accessModes": {
+        "roles": "roles",
+        "users": "users",
+        "everyone": "everyone"
+      },
+      "rateLimit": {
+        "global": "Rate limit global (ms)",
+        "perUser": "Rate limit per-user (ms)",
+        "perCommand": "Rate limit per-command (ms)"
+      },
+      "actions": {
+        "oauthAuthorize": "OAuth authorize",
+        "reconnect": "Reconnect Twitch",
+        "refreshStatusAria": "Refresh Twitch status"
+      }
+    },
+    "debug": {
+      "enable": "Enable debug mode (verbose logs)",
+      "hint": "Logs are written to source-page console and extension service worker console.",
+      "channel": "Diagnostic channel",
+      "channelEmpty": "No diagnostic events."
+    }
+  }
+}
