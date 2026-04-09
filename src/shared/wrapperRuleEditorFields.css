@@ -1,0 +1,86 @@
+.field--full {
+  grid-column: 1 / -1;
+}
+
+.wrapper-rule__controls {
+  gap: 8px;
+}
+
+.wrapper-editor-dialog {
+  width: min(660px, calc(100vw - 24px));
+  max-width: min(660px, calc(100vw - 24px));
+}
+
+.wrapper-editor-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.wrapper-editor-selectors {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+  border: 1px solid var(--gray-a6);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.wrapper-editor-actions {
+  justify-content: flex-end;
+}
+
+.wrapper-selector-input {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0;
+  align-items: center;
+}
+
+.wrapper-selector-input--with-run {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.wrapper-selector-input--no-picker {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.wrapper-selector-input--no-picker-with-run {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.wrapper-selector-input--with-volume-mode {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.wrapper-selector-input--no-picker-with-volume-mode {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.wrapper-selector-mode .rt-SelectTrigger {
+  min-width: 108px;
+}
+
+.wrapper-selector-mode-popover {
+  z-index: 100000 !important;
+}
+
+.wrapper-rule-checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  width: 100%;
+  min-height: 32px;
+}
+
+.wrapper-rule-checkbox-field .rt-Text {
+  line-height: 1.2;
+}
+
+@media (max-width: 720px) {
+  .wrapper-editor-grid,
+  .wrapper-editor-selectors {
+    grid-template-columns: 1fr;
+  }
+}
