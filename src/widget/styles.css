@@ -1,0 +1,96 @@
+:root {
+  --widget-bg: rgba(10, 14, 22, 0.82);
+  --widget-fg: #f8fafc;
+  --widget-muted: #c9d4e4;
+  --widget-progress: #ffffff;
+  --widget-progress-width: 15%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--widget-fg);
+  font: 16px/1.35 "Inter", "Segoe UI", sans-serif;
+}
+
+.widget {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.widget--hidden {
+  display: none;
+}
+
+.widget--cover-hidden {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.widget--cover-hidden .widget__cover {
+  display: none;
+}
+
+.widget__cover {
+  width: 78px;
+  height: 78px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+  background: transparent;
+  display: block;
+}
+
+.widget__cover--empty {
+  visibility: hidden;
+}
+
+.widget__meta {
+  min-width: 0;
+}
+
+.widget__title {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.widget__artist {
+  color: var(--widget-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.widget__time {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--widget-muted);
+}
+
+.widget__progress {
+  margin-top: 8px;
+  width: var(--widget-progress-width);
+  max-width: 100%;
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.26);
+  overflow: hidden;
+}
+
+.widget__progress-fill {
+  width: 0%;
+  height: 100%;
+  background: var(--widget-progress);
+}
