@@ -5,6 +5,10 @@ const D = {
   obsPort: 4455,
   obsPassword: "",
   obsInputName: "NowPlaying",
+  twitchChannel: "",
+  voteSkipKeyword: "skip",
+  voteSaveKeyword: "ClippyJAM",
+  voteSkipThreshold: 3,
 };
 
 const STATE_LABELS = {
@@ -81,6 +85,10 @@ chrome.storage.sync.get(null, (c) => {
   $("obsPort").value = orPort(D.obsPort, v.obsPort);
   $("obsPassword").value = v.obsPassword != null ? String(v.obsPassword) : "";
   $("obsInputName").value = orDef(D.obsInputName, v.obsInputName);
+  $("twitchChannel").value = v.twitchChannel != null ? String(v.twitchChannel) : "";
+  $("voteSkipKeyword").value = v.voteSkipKeyword != null ? String(v.voteSkipKeyword) : D.voteSkipKeyword;
+  $("voteSaveKeyword").value = v.voteSaveKeyword != null ? String(v.voteSaveKeyword) : D.voteSaveKeyword;
+  $("voteSkipThreshold").value = Number(v.voteSkipThreshold) > 0 ? Number(v.voteSkipThreshold) : D.voteSkipThreshold;
 });
 
 chrome.storage.local.get({ obsStatus: null }, (v) => {
@@ -101,6 +109,10 @@ $("save").addEventListener("click", () => {
       obsPort: parseInt($("obsPort").value, 10) || D.obsPort,
       obsPassword: $("obsPassword").value,
       obsInputName: $("obsInputName").value.trim() || D.obsInputName,
+      twitchChannel: $("twitchChannel").value.trim().toLowerCase(),
+      voteSkipKeyword: $("voteSkipKeyword").value.trim() || D.voteSkipKeyword,
+      voteSaveKeyword: $("voteSaveKeyword").value.trim() || D.voteSaveKeyword,
+      voteSkipThreshold: Math.max(1, parseInt($("voteSkipThreshold").value, 10) || D.voteSkipThreshold),
     },
     () => {
       showSaveStatus("Сохранено. Переподключаюсь…");

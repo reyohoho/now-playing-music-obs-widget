@@ -24,14 +24,58 @@ function getNowPlayingRadioRecord() {
     }
 }
 
+function getMooBotProgressPercent() {
+    try {
+        const circle = document.querySelector(
+            "#input-element-widget-song-requests-progress > svg > circle.input-type-progress-circle-progress"
+        );
+        if (!circle) return null;
+        const [total] = (circle.getAttribute("stroke-dasharray") || "").trim().split(/\s+/);
+        const offset = parseFloat(circle.getAttribute("stroke-dashoffset") || "");
+        const dash = parseFloat(total || "");
+        if (!isFinite(dash) || dash <= 0 || !isFinite(offset)) return null;
+        const pct = Math.round(((dash - offset) / dash) * 100);
+        if (pct < 0 || pct > 100) return null;
+        return pct;
+    } catch (_) {
+        return null;
+    }
+}
+
+function getMooBotRequesterNick() {
+    try {
+        const el = document.querySelector(
+            "#widget-song-requests > div > div.widget-body.list-shown.playing > ul.widget-song-requests-list > li.playing > div.widget-song-requests-list-text > small"
+        );
+        if (!el) return null;
+        const raw = (el.innerText || el.textContent || "").trim();
+        if (!raw) return null;
+        const nick = raw.replace(/^by\s+/i, "").trim();
+        return nick || null;
+    } catch (_) {
+        return null;
+    }
+}
+
 function getNowPlayingMB() {
     try {
-        const song = document.querySelector('iframe').getAttribute('title');
-        sendToOBS_WS("MB", song);
-        console.log("IDDQD", "tick getNowPlayingMB", song);
-        setTimeout(getNowPlayingMB, 1500);
+        const iframe = document.querySelector('iframe');
+        const song = iframe?.getAttribute('title');
+        if (song) {
+            if (typeof onMooBotTrackTick === "function") onMooBotTrackTick(song);
+            const pct = getMooBotProgressPercent();
+            const requester = getMooBotRequesterNick();
+            let songLine = song;
+            if (pct != null) songLine += ` (${pct}%)`;
+            if (requester) songLine += ` by ${requester}`;
+            const label = typeof getMooBotVoteLabel === "function" ? getMooBotVoteLabel() : "";
+            const line = label ? `${songLine}\n${label}` : songLine;
+            sendToOBS_WS("MB", line);
+            console.log("IDDQD", "tick getNowPlayingMB", line.replace(/\n/g, " | "));
+        }
     } catch (e) {
         console.log("iddqd", e);
+    } finally {
         setTimeout(getNowPlayingMB, 1500);
     }
 }
@@ -272,6 +316,230 @@ const NOW_PLAYING_BY_HOST = {
 const startNowPlaying = NOW_PLAYING_BY_HOST[location.hostname];
 if (startNowPlaying) {
     setTimeout(startNowPlaying, 1500);
+}
+
+// --- Twitch anonymous chat (moo.bot only) ---
+
+var onMooBotTrackTick = null;
+var getMooBotVoteLabel = null;
+
+if (location.hostname === "moo.bot") {
+    const TWITCH_IRC_URL = "wss://irc-ws.chat.twitch.tv:443";
+    const TWITCH_NICK = "justinfan" + Math.floor(1000 + Math.random() * 89000);
+    let twitchWs = null;
+    let twitchReconnectTimer = null;
+    let twitchChannel = "";
+
+    let voteSkipKeyword = "skip";
+    let voteSaveKeyword = "ClippyJAM";
+    let voteSkipThreshold = 3;
+
+    const voteState = {
+        currentTrack: "",
+        votes: new Map(),
+        triggeredForTrack: "",
+    };
+
+    function clickSkipButton() {
+        const btn = document.querySelector("#song-requests-action-skip > i");
+        if (!btn) {
+            console.log("IDDQD", "vote: skip button not found (#song-requests-action-skip > i)");
+            return false;
+        }
+        btn.click();
+        console.log("IDDQD", "vote: SKIP triggered");
+        return true;
+    }
+
+    function countVotes() {
+        let skip = 0;
+        let save = 0;
+        for (const v of voteState.votes.values()) {
+            if (v === "skip") skip++;
+            else if (v === "save") save++;
+        }
+        return { skip, save, net: skip - save };
+    }
+
+    function castVote(login, display, vote) {
+        if (!voteState.currentTrack) return;
+        const prev = voteState.votes.get(login);
+        if (prev === vote) return;
+        voteState.votes.set(login, vote);
+        const c = countVotes();
+        const action = prev ? `${prev}→${vote}` : vote;
+        console.log(
+            "IDDQD",
+            `vote: ${display} ${action} [skip=${c.skip} save=${c.save} net=${c.net}/${voteSkipThreshold}] track="${voteState.currentTrack}"`
+        );
+        pushMooBotLineToObs();
+        if (
+            c.net >= voteSkipThreshold &&
+            voteState.triggeredForTrack !== voteState.currentTrack
+        ) {
+            if (clickSkipButton()) {
+                voteState.triggeredForTrack = voteState.currentTrack;
+            }
+        }
+    }
+
+    function buildVoteLabel() {
+        const c = countVotes();
+        return `skip(${voteSkipKeyword})/save(${voteSaveKeyword}): ${c.net}/${voteSkipThreshold}`;
+    }
+
+    function pushMooBotLineToObs() {
+        const song = voteState.currentTrack;
+        if (!song) return;
+        const label = buildVoteLabel();
+        sendToOBS_WS("MB", `${song}\n${label}`);
+    }
+
+    getMooBotVoteLabel = buildVoteLabel;
+
+    function processChatForVote(login, display, text) {
+        const words = text.split(/\s+/).filter(Boolean);
+        let vote = null;
+        if (voteSkipKeyword && words.includes(voteSkipKeyword)) vote = "skip";
+        else if (voteSaveKeyword && words.includes(voteSaveKeyword)) vote = "save";
+        if (vote) castVote(login, display, vote);
+    }
+
+    onMooBotTrackTick = function (track) {
+        if (!track) return;
+        if (track !== voteState.currentTrack) {
+            voteState.currentTrack = track;
+            voteState.votes.clear();
+            voteState.triggeredForTrack = "";
+            console.log("IDDQD", `vote: track changed -> "${track}" (votes reset)`);
+        } else {
+            voteState.currentTrack = track;
+        }
+    };
+
+    function parseTwitchMessage(raw) {
+        let line = raw;
+        let tagsPart = "";
+        if (line.startsWith("@")) {
+            const sp = line.indexOf(" ");
+            if (sp === -1) return null;
+            tagsPart = line.slice(1, sp);
+            line = line.slice(sp + 1);
+        }
+        const match = line.match(
+            /^:(\S+?)!\S+@\S+\s+PRIVMSG\s+#(\S+)\s+:([\s\S]*)$/
+        );
+        if (!match) return null;
+
+        const login = match[1].toLowerCase();
+        let displayName = match[1];
+        if (tagsPart) {
+            for (const kv of tagsPart.split(";")) {
+                const eq = kv.indexOf("=");
+                if (eq === -1) continue;
+                if (kv.slice(0, eq) === "display-name") {
+                    const v = kv.slice(eq + 1);
+                    if (v) displayName = v;
+                    break;
+                }
+            }
+        }
+        return { login, user: displayName, channel: match[2], text: match[3].trimEnd() };
+    }
+
+    function connectTwitchChat(channel) {
+        if (twitchWs) {
+            twitchWs.onclose = null;
+            twitchWs.close();
+            twitchWs = null;
+        }
+        if (!channel) return;
+
+        console.log("IDDQD", "twitch: connecting to", channel);
+        twitchWs = new WebSocket(TWITCH_IRC_URL);
+
+        twitchWs.onopen = () => {
+            twitchWs.send("CAP REQ :twitch.tv/tags twitch.tv/commands");
+            twitchWs.send("PASS SCHMOOPIIE");
+            twitchWs.send("NICK " + TWITCH_NICK);
+            twitchWs.send("JOIN #" + channel);
+            console.log("IDDQD", "twitch: joined #" + channel);
+        };
+
+        twitchWs.onmessage = (ev) => {
+            const lines = ev.data.split("\r\n").filter(Boolean);
+            for (const line of lines) {
+                if (line.startsWith("PING")) {
+                    const trailing = line.slice(4).trim() || ":tmi.twitch.tv";
+                    twitchWs.send("PONG " + trailing);
+                    continue;
+                }
+                const msg = parseTwitchMessage(line);
+                if (msg) {
+                    console.log("IDDQD", `twitch [#${msg.channel}] ${msg.user}: ${msg.text}`);
+                    processChatForVote(msg.login, msg.user, msg.text);
+                } else if (line.includes(" PRIVMSG ")) {
+                    console.log("IDDQD", "twitch raw (unparsed PRIVMSG):", line);
+                }
+            }
+        };
+
+        twitchWs.onclose = () => {
+            console.log("IDDQD", "twitch: disconnected, reconnecting in 5s");
+            twitchWs = null;
+            clearTimeout(twitchReconnectTimer);
+            twitchReconnectTimer = setTimeout(() => connectTwitchChat(twitchChannel), 5000);
+        };
+
+        twitchWs.onerror = (e) => {
+            console.log("IDDQD", "twitch: ws error", e);
+        };
+    }
+
+    chrome.storage.sync.get(
+        {
+            twitchChannel: "",
+            voteSkipKeyword: "skip",
+            voteSaveKeyword: "ClippyJAM",
+            voteSkipThreshold: 3,
+        },
+        (cfg) => {
+            twitchChannel = (cfg.twitchChannel || "").trim().toLowerCase();
+            voteSkipKeyword = String(cfg.voteSkipKeyword || "skip");
+            voteSaveKeyword = String(cfg.voteSaveKeyword || "ClippyJAM");
+            voteSkipThreshold = Math.max(1, Number(cfg.voteSkipThreshold) || 3);
+            console.log(
+                "IDDQD",
+                `vote: config loaded skip="${voteSkipKeyword}" save="${voteSaveKeyword}" threshold=${voteSkipThreshold}`
+            );
+            if (twitchChannel) connectTwitchChat(twitchChannel);
+        }
+    );
+
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== "sync") return;
+
+        if (changes.twitchChannel) {
+            const next = (changes.twitchChannel.newValue || "").trim().toLowerCase();
+            if (next !== twitchChannel) {
+                twitchChannel = next;
+                clearTimeout(twitchReconnectTimer);
+                connectTwitchChat(twitchChannel);
+            }
+        }
+        if (changes.voteSkipKeyword) {
+            voteSkipKeyword = String(changes.voteSkipKeyword.newValue || "skip");
+            console.log("IDDQD", `vote: skip keyword -> "${voteSkipKeyword}"`);
+        }
+        if (changes.voteSaveKeyword) {
+            voteSaveKeyword = String(changes.voteSaveKeyword.newValue || "ClippyJAM");
+            console.log("IDDQD", `vote: save keyword -> "${voteSaveKeyword}"`);
+        }
+        if (changes.voteSkipThreshold) {
+            voteSkipThreshold = Math.max(1, Number(changes.voteSkipThreshold.newValue) || 3);
+            console.log("IDDQD", `vote: threshold -> ${voteSkipThreshold}`);
+        }
+    });
 }
 
 

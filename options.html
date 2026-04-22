@@ -42,6 +42,17 @@
   <label>Порт <input id="obsPort" type="number" min="1" max="65535" /></label>
   <label>Пароль <input id="obsPassword" type="password" autocomplete="current-password" /></label>
   <label>Имя текстового источника <input id="obsInputName" type="text" autocomplete="off" /></label>
+
+  <h1 style="margin-top:1.5rem">Twitch Chat</h1>
+  <p class="h">Анонимное чтение чата Twitch-канала (работает только на moo.bot).</p>
+  <label>Канал <input id="twitchChannel" type="text" autocomplete="off" placeholder="channel_name" /></label>
+
+  <h1 style="margin-top:1.5rem">Голосование за скип (moo.bot)</h1>
+  <p class="h">Голоса считаются по одному на пользователя за текущий трек (при смене трека обнуляются). Сравнение регистрозависимое. Текст ищется как отдельное слово среди разделённых пробелами.</p>
+  <label>Ключевое слово / смайл для SKIP <input id="voteSkipKeyword" type="text" autocomplete="off" placeholder="skip" /></label>
+  <label>Ключевое слово / смайл для SAVE <input id="voteSaveKeyword" type="text" autocomplete="off" placeholder="ClippyJAM" /></label>
+  <label>Минимум голосов для скипа (net = skip − save) <input id="voteSkipThreshold" type="number" min="1" max="9999" /></label>
+
   <button type="button" id="save">Сохранить</button>
   <div id="saveStatus"></div>
   <script src="options.js"></script>
