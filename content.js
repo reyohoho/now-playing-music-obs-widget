@@ -11,6 +11,19 @@ function getNowPlayingYM() {
     }
 }
 
+function getNowPlayingRadioRecord() {
+    try {
+        const title = document.querySelector("#playerInfo > a > div > div:nth-child(1)").innerText
+        const artists = document.querySelector("#playerInfo > a > div > div.nAlcjXw7n-gCNvOuXJ3NGw\\=\\=").innerText
+        sendToOBS_WS("RR", `${artists} - ${title}`);
+        console.log("IDDQD", "tick getNowPlayingRadioRecord", `${artists} - ${title}`);
+        setTimeout(getNowPlayingRadioRecord, 1500);
+    } catch (e) {
+        console.log("iddqd", e);
+        setTimeout(getNowPlayingRadioRecord, 1500);
+    }
+}
+
 function getNowPlayingMB() {
     try {
         const song = document.querySelector('iframe').getAttribute('title');
@@ -252,6 +265,8 @@ const NOW_PLAYING_BY_HOST = {
     "vk.com": getNowPlayingVK,
     "www.vk.com": getNowPlayingVK,
     "m.vk.com": getNowPlayingVK,
+    "www.radiorecord.ru": getNowPlayingRadioRecord,
+    "radiorecord.ru": getNowPlayingRadioRecord,
 };
 
 const startNowPlaying = NOW_PLAYING_BY_HOST[location.hostname];

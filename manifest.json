@@ -30,7 +30,9 @@
         "https://www.soundcloud.com/*",
         "https://vk.com/*",
         "https://www.vk.com/*",
-        "https://m.vk.com/*"
+        "https://m.vk.com/*",
+        "https://www.radiorecord.ru/*",
+        "https://radiorecord.ru/*"
       ]
     },
     "options_ui": { "page": "options.html", "open_in_tab": true },
@@ -62,7 +64,9 @@
           "https://www.soundcloud.com/*",
           "https://vk.com/*",
           "https://www.vk.com/*",
-          "https://m.vk.com/*"
+          "https://m.vk.com/*",
+          "https://www.radiorecord.ru/*",
+          "https://radiorecord.ru/*"
         ],
         "run_at": "document_idle"
       }
