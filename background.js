@@ -1,3 +1,7 @@
+try {
+  importScripts("providers.js");
+} catch (_) {}
+
 let lastLineKey = { key: "", t: 0 };
 
 const DEFAULTS = {
@@ -6,9 +10,19 @@ const DEFAULTS = {
   obsPassword: "",
   obsInputName: "NowPlaying",
   obsEnabled: true,
+  providersDisabled: [],
 };
 
 const OBS_RECONNECT_MS = 4000;
+const OBS_LAST_LINE_STORAGE_KEY = "obsLastLine";
+const OBS_LAST_PROVIDER_STORAGE_KEY = "obsLastProviderId";
+
+// Track-inactivity watcher: clears OBS text if no supported tab has
+// reported a track recently.
+const NO_SONG_CHECK_INTERVAL_MS = 1000;
+const TAB_SONG_TTL_MS = 4000;
+const tabSongState = new Map();
+let noSongCheckTimer = null;
 
 const CLOSE_CODE = {
   AUTH_FAILED: 4009,
@@ -29,8 +43,10 @@ const obs = {
   reconnectTimer: null,
   inputName: DEFAULTS.obsInputName,
   lastLine: "",
+  lastProviderId: "",
   pendingRequests: new Map(),
   enabled: true,
+  disabledProviders: new Set(),
 };
 
 let obsStatus = {
@@ -42,6 +58,7 @@ let obsStatus = {
   inputName: DEFAULTS.obsInputName,
   passwordConfigured: false,
   enabled: true,
+  activeProviderId: "",
   updatedAt: Date.now(),
 };
 
@@ -394,14 +411,95 @@ function sendSetText(inputName, line) {
   );
 }
 
-function pushLineToObs(line) {
-  if (line === obs.lastLine) return;
+function persistLastLine() {
+  chrome.storage.local.set(
+    {
+      [OBS_LAST_LINE_STORAGE_KEY]: obs.lastLine,
+      [OBS_LAST_PROVIDER_STORAGE_KEY]: obs.lastProviderId || "",
+    },
+    () => void chrome.runtime.lastError
+  );
+}
+
+function loadLastLine() {
+  chrome.storage.local.get(
+    {
+      [OBS_LAST_LINE_STORAGE_KEY]: "",
+      [OBS_LAST_PROVIDER_STORAGE_KEY]: "",
+    },
+    (res) => {
+      if (chrome.runtime.lastError) return;
+      obs.lastLine = String(res?.[OBS_LAST_LINE_STORAGE_KEY] ?? "");
+      obs.lastProviderId = String(res?.[OBS_LAST_PROVIDER_STORAGE_KEY] ?? "");
+      if (obs.lastProviderId) {
+        updateObsStatus({ activeProviderId: obs.lastProviderId });
+      }
+    }
+  );
+}
+
+function pushLineToObs(line, providerId) {
+  providerId = providerId || "";
+  if (line === obs.lastLine) {
+    if (providerId && providerId !== obs.lastProviderId) {
+      obs.lastProviderId = providerId;
+      persistLastLine();
+      updateObsStatus({ activeProviderId: providerId });
+    }
+    return;
+  }
   const now = Date.now();
   if (line === lastLineKey.key && now - lastLineKey.t < 800) return;
   lastLineKey = { key: line, t: now };
 
   obs.lastLine = line;
+  obs.lastProviderId = providerId;
+  persistLastLine();
+  updateObsStatus({ activeProviderId: providerId });
   sendSetText(obs.inputName || DEFAULTS.obsInputName, line);
+}
+
+function clearObsText(reason) {
+  const hadLine = Boolean(obs.lastLine);
+  const hadProvider = Boolean(obs.lastProviderId);
+  if (!hadLine && !hadProvider) return;
+
+  obs.lastLine = "";
+  obs.lastProviderId = "";
+  lastLineKey = { key: "", t: Date.now() };
+  persistLastLine();
+  const patch = { activeProviderId: "" };
+  if (reason) patch.message = reason;
+  updateObsStatus(patch);
+  if (hadLine) sendSetText(obs.inputName || DEFAULTS.obsInputName, "");
+}
+
+function startNoSongWatcher() {
+  if (noSongCheckTimer) return;
+  noSongCheckTimer = setInterval(() => {
+    if (!obs.enabled) return;
+    const now = Date.now();
+    for (const [tabId, info] of tabSongState) {
+      if (now - info.time > TAB_SONG_TTL_MS) {
+        tabSongState.delete(tabId);
+      }
+    }
+    if (tabSongState.size === 0 && (obs.lastLine || obs.lastProviderId)) {
+      clearObsText("Нет активных треков на поддерживаемых вкладках. Очищаю текст OBS.");
+    }
+  }, NO_SONG_CHECK_INTERVAL_MS);
+}
+
+function applyDisabledProviders(nextSet) {
+  obs.disabledProviders = nextSet instanceof Set ? nextSet : new Set(nextSet || []);
+  for (const [tabId, info] of tabSongState) {
+    if (obs.disabledProviders.has(info.providerId)) {
+      tabSongState.delete(tabId);
+    }
+  }
+  if (obs.lastProviderId && obs.disabledProviders.has(obs.lastProviderId)) {
+    clearObsText("Текущий провайдер выключен в настройках. Очищаю текст OBS.");
+  }
 }
 
 function loadObsConfig() {
@@ -414,6 +512,9 @@ function loadObsConfig() {
     obs.triedTrimmedFallback = false;
     obs.inputName = (cfg.obsInputName || DEFAULTS.obsInputName).trim();
     obs.enabled = cfg.obsEnabled !== false;
+    applyDisabledProviders(
+      new Set(Array.isArray(cfg.providersDisabled) ? cfg.providersDisabled : [])
+    );
 
     updateObsStatus({
       configuredHost: obs.host,
@@ -445,6 +546,16 @@ function handleSongMessage(message, sender) {
     return;
   }
 
+  const providerId =
+    (typeof obsProviderIdFromUrl === "function"
+      ? obsProviderIdFromUrl(sender.tab?.url || sender.url || "")
+      : "") || "";
+
+  if (providerId && obs.disabledProviders.has(providerId)) {
+    tabSongState.delete(tabId);
+    return;
+  }
+
   chrome.tabs.get(tabId, (tab) => {
     if (chrome.runtime.lastError) {
       updateObsStatus({ message: "Не удалось получить состояние вкладки браузера." });
@@ -452,19 +563,26 @@ function handleSongMessage(message, sender) {
     }
 
     if (!tab?.audible) {
+      tabSongState.delete(tabId);
       updateObsStatus({ message: "Вкладка не воспроизводит звук. Обновление пропущено." });
       return;
     }
 
     const line = String(message.song).trim();
     if (!line) {
+      tabSongState.delete(tabId);
       updateObsStatus({ message: "Сайт вернул пустую строку трека." });
       return;
     }
 
-    pushLineToObs(line);
+    tabSongState.set(tabId, { line, time: Date.now(), providerId });
+    pushLineToObs(line, providerId);
   });
 }
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  tabSongState.delete(tabId);
+});
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "sync") return;
@@ -476,13 +594,22 @@ chrome.storage.onChanged.addListener((changes, area) => {
     changes.obsEnabled
   ) {
     loadObsConfig();
+    return;
+  }
+  if (changes.providersDisabled) {
+    const list = changes.providersDisabled.newValue;
+    applyDisabledProviders(
+      new Set(Array.isArray(list) ? list : [])
+    );
   }
 });
 
 chrome.runtime.onInstalled.addListener(loadObsConfig);
 chrome.runtime.onStartup.addListener(loadObsConfig);
 persistObsStatus();
+loadLastLine();
 loadObsConfig();
+startNoSongWatcher();
 
 chrome.action.onClicked.addListener(() => {
   chrome.runtime.openOptionsPage();

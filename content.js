@@ -57,21 +57,69 @@ function getMooBotRequesterNick() {
     }
 }
 
+// When a moo.bot track changes, iframe.title updates immediately but the
+// progress circle and requester nick render a tick or two later. Without
+// a grace window OBS would briefly show "song" and then "song (N%) by nick",
+// producing a visible flicker. We delay sending a new track until both
+// pct and requester are available (or the grace window elapses), and keep
+// heartbeating the previous "ready" line so the OBS watcher doesn't clear
+// the text while we wait.
+const MB_INITIAL_GRACE_MS = 4000;
+let mbLastTrack = "";
+let mbTrackSince = 0;
+let mbTrackReady = false;
+let mbLastSentLine = "";
+
+function mbOnTrackTick(song) {
+    if (song !== mbLastTrack) {
+        mbLastTrack = song;
+        mbTrackSince = Date.now();
+        mbTrackReady = false;
+    }
+}
+
+function buildMooBotLine(song) {
+    const pct = getMooBotProgressPercent();
+    const requester = getMooBotRequesterNick();
+    let body = song;
+    if (pct != null) body += ` (${pct}%)`;
+    if (requester) body += ` by ${requester}`;
+    const label = typeof getMooBotVoteLabel === "function" ? getMooBotVoteLabel() : "";
+    return {
+        line: label ? `${body}\n${label}` : body,
+        pct,
+        requester,
+    };
+}
+
+function sendMooBotToObs(song) {
+    if (!song) return;
+    const { line, pct, requester } = buildMooBotLine(song);
+    if (!mbTrackReady) {
+        const haveMeta = pct != null && !!requester;
+        const graceElapsed = Date.now() - mbTrackSince >= MB_INITIAL_GRACE_MS;
+        if (haveMeta || graceElapsed) {
+            mbTrackReady = true;
+        } else {
+            if (mbLastSentLine) {
+                sendToOBS_WS("MB", mbLastSentLine);
+            }
+            return;
+        }
+    }
+    mbLastSentLine = line;
+    sendToOBS_WS("MB", line);
+    console.log("IDDQD", "tick getNowPlayingMB", line.replace(/\n/g, " | "));
+}
+
 function getNowPlayingMB() {
     try {
         const iframe = document.querySelector('iframe');
         const song = iframe?.getAttribute('title');
         if (song) {
             if (typeof onMooBotTrackTick === "function") onMooBotTrackTick(song);
-            const pct = getMooBotProgressPercent();
-            const requester = getMooBotRequesterNick();
-            let songLine = song;
-            if (pct != null) songLine += ` (${pct}%)`;
-            if (requester) songLine += ` by ${requester}`;
-            const label = typeof getMooBotVoteLabel === "function" ? getMooBotVoteLabel() : "";
-            const line = label ? `${songLine}\n${label}` : songLine;
-            sendToOBS_WS("MB", line);
-            console.log("IDDQD", "tick getNowPlayingMB", line.replace(/\n/g, " | "));
+            mbOnTrackTick(song);
+            sendMooBotToObs(song);
         }
     } catch (e) {
         console.log("iddqd", e);
@@ -391,8 +439,8 @@ if (location.hostname === "moo.bot") {
     function pushMooBotLineToObs() {
         const song = voteState.currentTrack;
         if (!song) return;
-        const label = buildVoteLabel();
-        sendToOBS_WS("MB", `${song}\n${label}`);
+        mbOnTrackTick(song);
+        sendMooBotToObs(song);
     }
 
     getMooBotVoteLabel = buildVoteLabel;

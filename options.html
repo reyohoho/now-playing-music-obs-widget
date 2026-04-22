@@ -4,22 +4,193 @@
   <meta charset="UTF-8" />
   <title>OBS — настройки</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 28rem; margin: 1rem; line-height: 1.4; }
-    h2 { margin: 0 0 0.4rem; font-size: 1rem; }
-    label { display: block; margin-top: 0.6rem; font-weight: 600; }
-    input { width: 100%; box-sizing: border-box; margin-top: 0.2rem; padding: 0.35rem; }
-    button { margin-top: 1rem; padding: 0.45rem 0.9rem; }
-    #saveStatus { margin-top: 0.5rem; color: #080; min-height: 1.2em; }
-    .h { font-size: 0.85rem; color: #555; }
-    .card { border: 1px solid #d5d8e0; border-radius: 0.5rem; padding: 0.7rem; margin-top: 0.8rem; background: #f7f8fc; }
-    .kv { margin-top: 0.25rem; }
-    .state { font-weight: 700; }
-    .state.connected { color: #146c2e; }
-    .state.connecting { color: #8f6300; }
-    .state.disconnected { color: #6c757d; }
-    .state.error { color: #b02a37; }
-    .state.idle { color: #6c757d; }
-    .err { color: #b02a37; }
+    :root {
+      --bg:        #0f1115;
+      --bg-elev:   #171a21;
+      --bg-elev-2: #1f232c;
+      --border:    #2a2f3a;
+      --border-hi: #3c4250;
+      --text:      #e6e8ee;
+      --text-dim:  #9aa3b2;
+      --text-faint:#6b7282;
+      --accent:    #7aa2ff;
+      --accent-bg: #3a5bb8;
+      --accent-bg-hi: #4a6bc8;
+      --green:     #4ade80;
+      --yellow:    #fbbf24;
+      --red:       #f87171;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+    }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      max-width: 36rem;
+      margin: 1.5rem auto;
+      padding: 0 1rem 2rem;
+      line-height: 1.45;
+    }
+    h1 {
+      margin: 0 0 0.5rem;
+      font-size: 1.3rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    h2 {
+      margin: 0 0 0.4rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    p { margin: 0.25rem 0; }
+    p.h, .h {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+    }
+    label {
+      display: block;
+      margin-top: 0.75rem;
+      font-weight: 500;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="password"] {
+      width: 100%;
+      margin-top: 0.3rem;
+      padding: 0.5rem 0.65rem;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 0.45rem;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: var(--bg-elev-2);
+    }
+    button {
+      margin-top: 1rem;
+      margin-right: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg-elev-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 0.45rem;
+      font-size: 0.88rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    button:hover:not(:disabled) {
+      background: #262b36;
+      border-color: var(--border-hi);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    button.primary {
+      background: var(--accent-bg);
+      border-color: var(--accent-bg);
+      color: #fff;
+    }
+    button.primary:hover:not(:disabled) {
+      background: var(--accent-bg-hi);
+      border-color: var(--accent-bg-hi);
+    }
+    #saveStatus {
+      margin-top: 0.75rem;
+      color: var(--green);
+      min-height: 1.2em;
+      font-size: 0.85rem;
+    }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 0.6rem;
+      padding: 0.9rem 1rem 1rem;
+      margin-top: 1rem;
+      background: var(--bg-elev);
+    }
+    .kv {
+      margin-top: 0.3rem;
+      font-size: 0.88rem;
+    }
+    .state { font-weight: 600; }
+    .state.connected    { color: var(--green); }
+    .state.connecting   { color: var(--yellow); }
+    .state.disconnected { color: var(--text-faint); }
+    .state.disabled     { color: var(--text-faint); }
+    .state.error        { color: var(--red); }
+    .state.idle         { color: var(--text-faint); }
+    .err { color: var(--red); }
+
+    .providers {
+      display: grid;
+      gap: 0.4rem;
+      margin-top: 0.6rem;
+    }
+    .provider-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.5rem 0.7rem;
+      background: var(--bg-elev-2);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .provider-row:hover { border-color: var(--border-hi); }
+    .provider-row.active {
+      border-color: var(--green);
+      box-shadow: 0 0 0 1px var(--green) inset;
+    }
+    .provider-row input[type="checkbox"] {
+      margin: 0;
+      width: 1rem;
+      height: 1rem;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+    .provider-icon {
+      font-size: 1.15rem;
+      width: 1.5rem;
+      text-align: center;
+    }
+    .provider-name {
+      flex: 1;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+    .provider-hosts {
+      font-size: 0.75rem;
+      color: var(--text-faint);
+    }
+    .provider-dot {
+      width: 0.55rem;
+      height: 0.55rem;
+      border-radius: 50%;
+      background: var(--text-faint);
+      flex: 0 0 auto;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .provider-row.active .provider-dot {
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+    }
+    .provider-row.disabled { opacity: 0.55; }
+    .provider-row.disabled .provider-name {
+      text-decoration: line-through;
+      color: var(--text-dim);
+    }
   </style>
 </head>
 <body>
@@ -38,6 +209,12 @@
     <button type="button" id="reconnect">Переподключить</button>
   </div>
 
+  <div class="card">
+    <h2>Поддерживаемые провайдеры</h2>
+    <p class="h" style="margin-top:0.25rem">Выключите источники, которые не должны попадать в OBS. Зелёная точка — оттуда берётся текущий захваченный трек.</p>
+    <div class="providers" id="providers"></div>
+  </div>
+
   <label>Хост <input id="obsHost" type="text" autocomplete="off" /></label>
   <label>Порт <input id="obsPort" type="number" min="1" max="65535" /></label>
   <label>Пароль <input id="obsPassword" type="password" autocomplete="current-password" /></label>
@@ -53,8 +230,10 @@
   <label>Ключевое слово / смайл для SAVE <input id="voteSaveKeyword" type="text" autocomplete="off" placeholder="ClippyJAM" /></label>
   <label>Минимум голосов для скипа (net = skip − save) <input id="voteSkipThreshold" type="number" min="1" max="9999" /></label>
 
-  <button type="button" id="save">Сохранить</button>
+  <button type="button" id="save" class="primary">Сохранить</button>
   <div id="saveStatus"></div>
+
+  <script src="providers.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

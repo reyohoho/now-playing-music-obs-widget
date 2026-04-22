@@ -1,4 +1,4 @@
-/* global chrome */
+/* global chrome, OBS_PROVIDERS */
 
 const D = {
   obsHost: "127.0.0.1",
@@ -9,6 +9,7 @@ const D = {
   voteSkipKeyword: "skip",
   voteSaveKeyword: "ClippyJAM",
   voteSkipThreshold: 3,
+  providersDisabled: [],
 };
 
 const STATE_LABELS = {
@@ -34,11 +35,14 @@ function orPort(def, x) {
 
 let saveTimer = null;
 let currentEnabled = true;
+let currentDisabledProviders = new Set();
+let currentActiveProviderId = "";
+let providersRendered = false;
 
 function showSaveStatus(text, isError = false) {
   const el = $("saveStatus");
   el.textContent = text || "";
-  el.style.color = isError ? "#b02a37" : "#146c2e";
+  el.style.color = isError ? "#f87171" : "#4ade80";
   if (saveTimer) clearTimeout(saveTimer);
   if (text) {
     saveTimer = setTimeout(() => {
@@ -67,6 +71,104 @@ function renderObsStatus(s) {
   $("pwdConfigured").textContent = st.passwordConfigured ? "задан" : "пустой";
   $("connError").textContent = st.lastError ? `Ошибка: ${st.lastError}` : "";
   renderEnabledControls(enabled);
+
+  const nextActive = String(st.activeProviderId || "");
+  if (nextActive !== currentActiveProviderId) {
+    currentActiveProviderId = nextActive;
+    updateProviderRowStates();
+  }
+}
+
+function ensureProvidersRendered() {
+  if (providersRendered) return;
+  const container = $("providers");
+  if (!container) return;
+  const providers = Array.isArray(self.OBS_PROVIDERS) ? self.OBS_PROVIDERS : [];
+  const frag = document.createDocumentFragment();
+  for (const p of providers) {
+    const row = document.createElement("label");
+    row.className = "provider-row";
+    row.dataset.providerId = p.id;
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.dataset.id = p.id;
+
+    const icon = document.createElement("span");
+    icon.className = "provider-icon";
+    icon.textContent = p.icon || "•";
+
+    const name = document.createElement("span");
+    name.className = "provider-name";
+    name.textContent = p.name;
+
+    const hosts = document.createElement("span");
+    hosts.className = "provider-hosts";
+    hosts.textContent = p.hosts[0] || "";
+
+    const dot = document.createElement("span");
+    dot.className = "provider-dot";
+    dot.title = "Сейчас отсюда идёт трек";
+
+    row.appendChild(cb);
+    row.appendChild(icon);
+    row.appendChild(name);
+    row.appendChild(hosts);
+    row.appendChild(dot);
+    frag.appendChild(row);
+  }
+  container.innerHTML = "";
+  container.appendChild(frag);
+  container.addEventListener("change", onProviderToggle);
+  providersRendered = true;
+}
+
+function updateProviderRowStates() {
+  ensureProvidersRendered();
+  const container = $("providers");
+  if (!container) return;
+  const rows = container.querySelectorAll(".provider-row");
+  for (const row of rows) {
+    const id = row.dataset.providerId;
+    const cb = row.querySelector('input[type="checkbox"]');
+    const isDisabled = currentDisabledProviders.has(id);
+    if (cb) cb.checked = !isDisabled;
+    row.classList.toggle("disabled", isDisabled);
+    row.classList.toggle(
+      "active",
+      !isDisabled && currentActiveProviderId === id
+    );
+  }
+}
+
+function onProviderToggle(e) {
+  const target = e.target;
+  if (!(target instanceof HTMLInputElement)) return;
+  if (target.type !== "checkbox") return;
+  const id = target.dataset.id;
+  if (!id) return;
+  const checked = target.checked;
+
+  const next = new Set(currentDisabledProviders);
+  if (checked) next.delete(id);
+  else next.add(id);
+  currentDisabledProviders = next;
+  updateProviderRowStates();
+
+  chrome.storage.sync.set(
+    { providersDisabled: Array.from(next) },
+    () => {
+      if (chrome.runtime.lastError) {
+        showSaveStatus("Не удалось сохранить список провайдеров.", true);
+        return;
+      }
+      showSaveStatus(
+        checked
+          ? `Провайдер «${id}» включён.`
+          : `Провайдер «${id}» выключен.`
+      );
+    }
+  );
 }
 
 function requestObsStatus() {
@@ -79,6 +181,8 @@ function requestObsStatus() {
   });
 }
 
+ensureProvidersRendered();
+
 chrome.storage.sync.get(null, (c) => {
   const v = c || {};
   $("obsHost").value = orDef(D.obsHost, v.obsHost);
@@ -89,6 +193,11 @@ chrome.storage.sync.get(null, (c) => {
   $("voteSkipKeyword").value = v.voteSkipKeyword != null ? String(v.voteSkipKeyword) : D.voteSkipKeyword;
   $("voteSaveKeyword").value = v.voteSaveKeyword != null ? String(v.voteSaveKeyword) : D.voteSaveKeyword;
   $("voteSkipThreshold").value = Number(v.voteSkipThreshold) > 0 ? Number(v.voteSkipThreshold) : D.voteSkipThreshold;
+
+  currentDisabledProviders = new Set(
+    Array.isArray(v.providersDisabled) ? v.providersDisabled : []
+  );
+  updateProviderRowStates();
 });
 
 chrome.storage.local.get({ obsStatus: null }, (v) => {
@@ -99,6 +208,11 @@ requestObsStatus();
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes.obsStatus) {
     renderObsStatus(changes.obsStatus.newValue);
+  }
+  if (area === "sync" && changes.providersDisabled) {
+    const list = changes.providersDisabled.newValue;
+    currentDisabledProviders = new Set(Array.isArray(list) ? list : []);
+    updateProviderRowStates();
   }
 });
 
