@@ -602,6 +602,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
       new Set(Array.isArray(list) ? list : [])
     );
   }
+  if (changes.twitchChannel) {
+    const next = (changes.twitchChannel.newValue || "").trim().toLowerCase();
+    if (next !== viewersCurrentChannel) startViewersPoller(next);
+  }
 });
 
 chrome.runtime.onInstalled.addListener(loadObsConfig);
@@ -613,6 +617,58 @@ startNoSongWatcher();
 
 chrome.action.onClicked.addListener(() => {
   chrome.runtime.openOptionsPage();
+});
+
+const VIEWERS_POLL_MS = 5 * 1000;
+let viewersPollTimer = null;
+let viewersCurrentChannel = "";
+
+async function fetchTwitchViewers(channel) {
+  if (!channel) return;
+  const url = "https://gql.twitch.tv/gql";
+  const body = {
+    operationName: "StreamMetadata",
+    variables: { channelLogin: channel },
+    query:
+      "query StreamMetadata($channelLogin: String!) { user(login: $channelLogin) { stream { viewersCount } } }",
+  };
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Client-ID": "kimne78kx3ncx6brgo4mv6wki5h1ko",
+      },
+      body: JSON.stringify(body),
+    });
+    const json = await res.json();
+    const count = json?.data?.user?.stream?.viewersCount ?? 0;
+    console.log("[TwitchGQL] viewersCount:", count, "channel:", channel);
+    chrome.storage.local.set({
+      twitchViewersCount: count,
+      twitchViewersUpdatedAt: Date.now(),
+    });
+  } catch (err) {
+    console.error("[TwitchGQL] fetch failed:", err);
+  }
+}
+
+function startViewersPoller(channel) {
+  if (viewersPollTimer) {
+    clearInterval(viewersPollTimer);
+    viewersPollTimer = null;
+  }
+  viewersCurrentChannel = channel || "";
+  if (!viewersCurrentChannel) return;
+  fetchTwitchViewers(viewersCurrentChannel);
+  viewersPollTimer = setInterval(
+    () => fetchTwitchViewers(viewersCurrentChannel),
+    VIEWERS_POLL_MS
+  );
+}
+
+chrome.storage.sync.get({ twitchChannel: "" }, (v) => {
+  startViewersPoller((v.twitchChannel || "").trim().toLowerCase());
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

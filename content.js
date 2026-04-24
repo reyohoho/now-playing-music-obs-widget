@@ -80,15 +80,15 @@ function mbOnTrackTick(song) {
 
 function buildMooBotLine(song) {
     const pct = getMooBotProgressPercent();
-    const requester = getMooBotRequesterNick();
+    // const requester = getMooBotRequesterNick();
     let body = song;
     if (pct != null) body += ` (${pct}%)`;
-    if (requester) body += ` by ${requester}`;
+    // if (requester) body += ` by ${requester}`;
     const label = typeof getMooBotVoteLabel === "function" ? getMooBotVoteLabel() : "";
     return {
         line: label ? `${body}\n${label}` : body,
         pct,
-        requester,
+        // requester,
     };
 }
 
@@ -381,6 +381,16 @@ if (location.hostname === "moo.bot") {
     let voteSkipKeyword = "skip";
     let voteSaveKeyword = "ClippyJAM";
     let voteSkipThreshold = 3;
+    let voteSkipByPercent = false;
+    let voteSkipPercent = 10;
+    let twitchViewersCount = 0;
+
+    function getEffectiveThreshold() {
+        if (voteSkipByPercent && twitchViewersCount > 0) {
+            return Math.max(1, Math.ceil(twitchViewersCount * voteSkipPercent / 100));
+        }
+        return voteSkipThreshold;
+    }
 
     const voteState = {
         currentTrack: "",
@@ -416,13 +426,14 @@ if (location.hostname === "moo.bot") {
         voteState.votes.set(login, vote);
         const c = countVotes();
         const action = prev ? `${prev}→${vote}` : vote;
+        const eff = getEffectiveThreshold();
         console.log(
             "IDDQD",
-            `vote: ${display} ${action} [skip=${c.skip} save=${c.save} net=${c.net}/${voteSkipThreshold}] track="${voteState.currentTrack}"`
+            `vote: ${display} ${action} [skip=${c.skip} save=${c.save} net=${c.net}/${eff}] track="${voteState.currentTrack}"`
         );
         pushMooBotLineToObs();
         if (
-            c.net >= voteSkipThreshold &&
+            c.net >= eff &&
             voteState.triggeredForTrack !== voteState.currentTrack
         ) {
             if (clickSkipButton()) {
@@ -433,7 +444,7 @@ if (location.hostname === "moo.bot") {
 
     function buildVoteLabel() {
         const c = countVotes();
-        return `skip(${voteSkipKeyword})/save(${voteSaveKeyword}): ${c.net}/${voteSkipThreshold}`;
+        return `skip(${voteSkipKeyword})/save(${voteSaveKeyword}): ${c.net}/${getEffectiveThreshold()}`;
     }
 
     function pushMooBotLineToObs() {
@@ -544,27 +555,42 @@ if (location.hostname === "moo.bot") {
         };
     }
 
+    chrome.storage.local.get({ twitchViewersCount: 0 }, (loc) => {
+        twitchViewersCount = Number(loc.twitchViewersCount) || 0;
+    });
+
     chrome.storage.sync.get(
         {
             twitchChannel: "",
             voteSkipKeyword: "skip",
             voteSaveKeyword: "ClippyJAM",
             voteSkipThreshold: 3,
+            voteSkipByPercent: false,
+            voteSkipPercent: 10,
         },
         (cfg) => {
             twitchChannel = (cfg.twitchChannel || "").trim().toLowerCase();
             voteSkipKeyword = String(cfg.voteSkipKeyword || "skip");
             voteSaveKeyword = String(cfg.voteSaveKeyword || "ClippyJAM");
             voteSkipThreshold = Math.max(1, Number(cfg.voteSkipThreshold) || 3);
+            voteSkipByPercent = cfg.voteSkipByPercent === true;
+            voteSkipPercent = Math.max(1, Math.min(100, Number(cfg.voteSkipPercent) || 10));
             console.log(
                 "IDDQD",
-                `vote: config loaded skip="${voteSkipKeyword}" save="${voteSaveKeyword}" threshold=${voteSkipThreshold}`
+                `vote: config loaded skip="${voteSkipKeyword}" save="${voteSaveKeyword}" threshold=${voteSkipThreshold} byPercent=${voteSkipByPercent} percent=${voteSkipPercent}% viewers=${twitchViewersCount} effective=${getEffectiveThreshold()}`
             );
             if (twitchChannel) connectTwitchChat(twitchChannel);
         }
     );
 
     chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === "local") {
+            if (changes.twitchViewersCount) {
+                twitchViewersCount = Number(changes.twitchViewersCount.newValue) || 0;
+                console.log("IDDQD", `vote: viewersCount -> ${twitchViewersCount}, effective threshold -> ${getEffectiveThreshold()}`);
+            }
+            return;
+        }
         if (area !== "sync") return;
 
         if (changes.twitchChannel) {
@@ -586,6 +612,14 @@ if (location.hostname === "moo.bot") {
         if (changes.voteSkipThreshold) {
             voteSkipThreshold = Math.max(1, Number(changes.voteSkipThreshold.newValue) || 3);
             console.log("IDDQD", `vote: threshold -> ${voteSkipThreshold}`);
+        }
+        if (changes.voteSkipByPercent) {
+            voteSkipByPercent = changes.voteSkipByPercent.newValue === true;
+            console.log("IDDQD", `vote: byPercent -> ${voteSkipByPercent}, effective threshold -> ${getEffectiveThreshold()}`);
+        }
+        if (changes.voteSkipPercent) {
+            voteSkipPercent = Math.max(1, Math.min(100, Number(changes.voteSkipPercent.newValue) || 10));
+            console.log("IDDQD", `vote: skipPercent -> ${voteSkipPercent}%, effective threshold -> ${getEffectiveThreshold()}`);
         }
     });
 }

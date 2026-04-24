@@ -9,6 +9,8 @@ const D = {
   voteSkipKeyword: "skip",
   voteSaveKeyword: "ClippyJAM",
   voteSkipThreshold: 3,
+  voteSkipByPercent: false,
+  voteSkipPercent: 10,
   providersDisabled: [],
 };
 
@@ -35,6 +37,33 @@ function orPort(def, x) {
 
 let saveTimer = null;
 let currentEnabled = true;
+
+function updateSkipPercentVisibility() {
+  const checked = $("voteSkipByPercent").checked;
+  $("skipPercentRow").style.display = checked ? "" : "none";
+}
+
+function formatViewersInfo(count, updatedAt) {
+  if (!updatedAt) return "";
+  const ago = Math.round((Date.now() - updatedAt) / 1000);
+  const agoStr = ago < 60 ? `${ago}с назад` : `${Math.round(ago / 60)}м назад`;
+  const percent = Math.max(1, Math.min(100, Number($("voteSkipPercent").value) || D.voteSkipPercent));
+  const effective = Math.max(1, Math.ceil(count * percent / 100));
+  return count > 0
+    ? `Зрителей: ${count} (обновлено ${agoStr}) — порог при ${percent}%: ${effective} голосов`
+    : `Стрим оффлайн или зрители не определены (обновлено ${agoStr})`;
+}
+
+function refreshViewersInfo() {
+  const info = $("viewersCountInfo");
+  if (!info) return;
+  chrome.storage.local.get({ twitchViewersCount: 0, twitchViewersUpdatedAt: 0 }, (v) => {
+    info.textContent = formatViewersInfo(
+      Number(v.twitchViewersCount) || 0,
+      Number(v.twitchViewersUpdatedAt) || 0
+    );
+  });
+}
 let currentDisabledProviders = new Set();
 let currentActiveProviderId = "";
 let providersRendered = false;
@@ -193,6 +222,10 @@ chrome.storage.sync.get(null, (c) => {
   $("voteSkipKeyword").value = v.voteSkipKeyword != null ? String(v.voteSkipKeyword) : D.voteSkipKeyword;
   $("voteSaveKeyword").value = v.voteSaveKeyword != null ? String(v.voteSaveKeyword) : D.voteSaveKeyword;
   $("voteSkipThreshold").value = Number(v.voteSkipThreshold) > 0 ? Number(v.voteSkipThreshold) : D.voteSkipThreshold;
+  $("voteSkipByPercent").checked = v.voteSkipByPercent === true;
+  $("voteSkipPercent").value = Number(v.voteSkipPercent) > 0 ? Number(v.voteSkipPercent) : D.voteSkipPercent;
+  updateSkipPercentVisibility();
+  refreshViewersInfo();
 
   currentDisabledProviders = new Set(
     Array.isArray(v.providersDisabled) ? v.providersDisabled : []
@@ -206,8 +239,9 @@ chrome.storage.local.get({ obsStatus: null }, (v) => {
 requestObsStatus();
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes.obsStatus) {
-    renderObsStatus(changes.obsStatus.newValue);
+  if (area === "local") {
+    if (changes.obsStatus) renderObsStatus(changes.obsStatus.newValue);
+    if (changes.twitchViewersCount || changes.twitchViewersUpdatedAt) refreshViewersInfo();
   }
   if (area === "sync" && changes.providersDisabled) {
     const list = changes.providersDisabled.newValue;
@@ -215,6 +249,13 @@ chrome.storage.onChanged.addListener((changes, area) => {
     updateProviderRowStates();
   }
 });
+
+$("voteSkipByPercent").addEventListener("change", () => {
+  updateSkipPercentVisibility();
+  refreshViewersInfo();
+});
+
+$("voteSkipPercent").addEventListener("input", refreshViewersInfo);
 
 $("save").addEventListener("click", () => {
   chrome.storage.sync.set(
@@ -227,6 +268,8 @@ $("save").addEventListener("click", () => {
       voteSkipKeyword: $("voteSkipKeyword").value.trim() || D.voteSkipKeyword,
       voteSaveKeyword: $("voteSaveKeyword").value.trim() || D.voteSaveKeyword,
       voteSkipThreshold: Math.max(1, parseInt($("voteSkipThreshold").value, 10) || D.voteSkipThreshold),
+      voteSkipByPercent: $("voteSkipByPercent").checked,
+      voteSkipPercent: Math.max(1, Math.min(100, parseInt($("voteSkipPercent").value, 10) || D.voteSkipPercent)),
     },
     () => {
       showSaveStatus("Сохранено. Переподключаюсь…");

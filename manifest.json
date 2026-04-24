@@ -6,7 +6,8 @@
     "permissions": ["tabs", "storage"],
     "host_permissions": [
       "http://127.0.0.1:4455/*", "http://localhost:4455/*",
-      "wss://irc-ws.chat.twitch.tv/*"
+      "wss://irc-ws.chat.twitch.tv/*",
+      "https://gql.twitch.tv/*"
     ],
     "minimum_chrome_version": "116",
     "externally_connectable": {

@@ -230,6 +230,15 @@
   <label>Ключевое слово / смайл для SAVE <input id="voteSaveKeyword" type="text" autocomplete="off" placeholder="ClippyJAM" /></label>
   <label>Минимум голосов для скипа (net = skip − save) <input id="voteSkipThreshold" type="number" min="1" max="9999" /></label>
 
+  <label style="display:flex;align-items:center;gap:0.5rem;flex-direction:row;margin-top:0.9rem;font-weight:500;font-size:0.85rem;color:var(--text-dim);cursor:pointer">
+    <input type="checkbox" id="voteSkipByPercent" style="width:1rem;height:1rem;margin:0;flex:0 0 auto;accent-color:var(--accent);cursor:pointer" />
+    <span>Порог как % от зрителей Twitch</span>
+  </label>
+  <div id="skipPercentRow" style="display:none">
+    <label>Процент зрителей для скипа (%) <input id="voteSkipPercent" type="number" min="1" max="100" /></label>
+    <p class="h" id="viewersCountInfo" style="margin-top:0.4rem"></p>
+  </div>
+
   <button type="button" id="save" class="primary">Сохранить</button>
   <div id="saveStatus"></div>
 
