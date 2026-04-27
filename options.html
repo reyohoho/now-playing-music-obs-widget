@@ -21,34 +21,18 @@
       --red:       #f87171;
     }
     * { box-sizing: border-box; }
-    html, body {
-      background: var(--bg);
-      color: var(--text);
-    }
+    html, body { background: var(--bg); color: var(--text); }
     body {
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      max-width: 36rem;
+      max-width: 44rem;
       margin: 1.5rem auto;
       padding: 0 1rem 2rem;
       line-height: 1.45;
     }
-    h1 {
-      margin: 0 0 0.5rem;
-      font-size: 1.3rem;
-      font-weight: 600;
-      letter-spacing: 0.01em;
-    }
-    h2 {
-      margin: 0 0 0.4rem;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text);
-    }
+    h1 { margin: 0 0 0.5rem; font-size: 1.3rem; font-weight: 600; letter-spacing: 0.01em; }
+    h2 { margin: 0 0 0.4rem; font-size: 0.95rem; font-weight: 600; color: var(--text); }
     p { margin: 0.25rem 0; }
-    p.h, .h {
-      font-size: 0.82rem;
-      color: var(--text-dim);
-    }
+    p.h, .h { font-size: 0.82rem; color: var(--text-dim); }
     label {
       display: block;
       margin-top: 0.75rem;
@@ -70,10 +54,22 @@
       font-family: inherit;
       transition: border-color 0.15s, background 0.15s;
     }
-    input:focus {
-      outline: none;
-      border-color: var(--accent);
-      background: var(--bg-elev-2);
+    input:focus { outline: none; border-color: var(--accent); background: var(--bg-elev-2); }
+    input[type="range"] { width: 100%; accent-color: var(--accent); }
+    input[type="color"] {
+      width: 3rem; height: 2rem; padding: 0.15rem;
+      background: var(--bg-elev); border: 1px solid var(--border);
+      border-radius: 0.4rem; cursor: pointer;
+    }
+    select {
+      width: 100%; margin-top: 0.3rem;
+      padding: 0.45rem 0.6rem;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 0.45rem;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-family: inherit;
     }
     button {
       margin-top: 1rem;
@@ -88,28 +84,14 @@
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s;
     }
-    button:hover:not(:disabled) {
-      background: #262b36;
-      border-color: var(--border-hi);
-    }
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    button.primary {
-      background: var(--accent-bg);
-      border-color: var(--accent-bg);
-      color: #fff;
-    }
-    button.primary:hover:not(:disabled) {
-      background: var(--accent-bg-hi);
-      border-color: var(--accent-bg-hi);
-    }
+    button:hover:not(:disabled) { background: #262b36; border-color: var(--border-hi); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.primary { background: var(--accent-bg); border-color: var(--accent-bg); color: #fff; }
+    button.primary:hover:not(:disabled) { background: var(--accent-bg-hi); border-color: var(--accent-bg-hi); }
+    button.danger { background: #3a1f24; border-color: #5c2b33; color: var(--red); }
+    button.danger:hover:not(:disabled) { background: #4a2830; border-color: var(--red); }
     #saveStatus {
-      margin-top: 0.75rem;
-      color: var(--green);
-      min-height: 1.2em;
-      font-size: 0.85rem;
+      margin-top: 0.75rem; color: var(--green); min-height: 1.2em; font-size: 0.85rem;
     }
     .card {
       border: 1px solid var(--border);
@@ -118,10 +100,7 @@
       margin-top: 1rem;
       background: var(--bg-elev);
     }
-    .kv {
-      margin-top: 0.3rem;
-      font-size: 0.88rem;
-    }
+    .kv { margin-top: 0.3rem; font-size: 0.88rem; }
     .state { font-weight: 600; }
     .state.connected    { color: var(--green); }
     .state.connecting   { color: var(--yellow); }
@@ -131,82 +110,287 @@
     .state.idle         { color: var(--text-faint); }
     .err { color: var(--red); }
 
-    .providers {
+    .mode-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.6rem; }
+    .mode-opt {
+      display: flex; align-items: flex-start; gap: 0.6rem;
+      padding: 0.7rem 0.85rem;
+      background: var(--bg-elev-2);
+      border: 1px solid var(--border);
+      border-radius: 0.55rem;
+      cursor: pointer; user-select: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .mode-opt:hover { border-color: var(--border-hi); }
+    .mode-opt input { margin-top: 0.15rem; accent-color: var(--accent); cursor: pointer; }
+    .mode-opt.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+    .mode-opt .t { font-size: 0.9rem; font-weight: 600; }
+    .mode-opt .d { font-size: 0.78rem; color: var(--text-dim); margin-top: 0.2rem; }
+
+    .mode-section { display: none; }
+    body.mode-direct .mode-section.for-direct { display: block; }
+    body.mode-server .mode-section.for-server { display: block; }
+
+    .copyRow { display: flex; gap: 0.45rem; align-items: stretch; margin-top: 0.3rem; }
+    .copyRow input {
+      flex: 1; margin-top: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.82rem; letter-spacing: 0.02em;
+    }
+    .copyRow button { margin-top: 0; padding: 0.4rem 0.7rem; font-size: 0.8rem; flex: 0 0 auto; }
+
+    .chip {
+      display: inline-block; padding: 0.15rem 0.5rem;
+      border-radius: 999px; font-size: 0.72rem;
+      background: var(--bg-elev-2); border: 1px solid var(--border); color: var(--text-dim);
+    }
+    .chip.accent { color: var(--accent); border-color: var(--accent); }
+
+    /* --- overlay settings card --- */
+    .overlay-grid {
       display: grid;
-      gap: 0.4rem;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.6rem 1rem;
       margin-top: 0.6rem;
     }
-    .provider-row {
+    .overlay-grid label { margin-top: 0; }
+    .overlay-grid .full { grid-column: 1 / -1; }
+    .rangeRow { display: flex; gap: 0.6rem; align-items: center; margin-top: 0.3rem; }
+    .rangeRow input[type="range"] { flex: 1; }
+    .rangeRow .val {
+      min-width: 3.5rem; text-align: right;
+      color: var(--text-dim); font-size: 0.85rem;
+      font-family: ui-monospace, monospace;
+    }
+    .colorRow { display: flex; gap: 0.6rem; align-items: center; margin-top: 0.3rem; }
+    .colorRow input[type="text"] { flex: 1; margin-top: 0; font-family: ui-monospace, monospace; font-size: 0.82rem; }
+    .toggle {
+      display: flex; gap: 0.55rem; align-items: center;
+      margin-top: 0; font-weight: 500; color: var(--text);
+      font-size: 0.88rem; cursor: pointer; user-select: none;
+    }
+    .toggle input[type="checkbox"] {
+      width: 1.05rem; height: 1.05rem; margin: 0; accent-color: var(--accent); cursor: pointer;
+    }
+
+    /* --- live preview --- */
+    .preview-frame {
+      margin-top: 0.6rem;
+      padding: 1.2rem 1.4rem;
+      background:
+        repeating-conic-gradient(#2a2f3a 0 25%, #1a1e25 0 50%) 0 0 / 1.2rem 1.2rem;
+      border-radius: 0.55rem;
+      border: 1px solid var(--border);
+      min-height: 6rem;
+      overflow: hidden;
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+    }
+    .preview-stage {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.7rem 1.1rem;
+      color: #fff;
+      background: rgba(16,18,24,0.66);
+      border-radius: 999px;
+      font-size: 22px;
+      font-family: "Inter","Segoe UI",system-ui,sans-serif;
+      font-weight: 500;
+      max-width: 100%;
+    }
+    .preview-stage.no-bg { background: transparent !important; box-shadow: none; text-shadow: 0 2px 4px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.55); padding-left: 0; padding-right: 0; }
+    .preview-stage .dot {
+      width: 0.6rem; height: 0.6rem; border-radius: 50%;
+      background: #4ade80; box-shadow: 0 0 10px #4ade80;
+      flex: 0 0 auto;
+      animation: previewPulse 1.8s ease-in-out infinite;
+    }
+    .preview-stage.no-dot .dot { display: none; }
+    .preview-stage .icon { font-size: 1.05em; flex: 0 0 auto; }
+    .preview-stage.no-icon .icon { display: none; }
+    @keyframes previewPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.55; transform: scale(0.82); }
+    }
+    .preview-stage .txt {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 28rem;
+    }
+
+    .providers { display: grid; gap: 0.4rem; margin-top: 0.6rem; }
+    .provider-row {
+      display: flex; align-items: center; gap: 0.6rem;
       padding: 0.5rem 0.7rem;
       background: var(--bg-elev-2);
       border: 1px solid var(--border);
       border-radius: 0.5rem;
-      cursor: pointer;
-      user-select: none;
+      cursor: pointer; user-select: none;
       transition: border-color 0.15s, background 0.15s;
     }
     .provider-row:hover { border-color: var(--border-hi); }
-    .provider-row.active {
-      border-color: var(--green);
-      box-shadow: 0 0 0 1px var(--green) inset;
-    }
+    .provider-row.active { border-color: var(--green); box-shadow: 0 0 0 1px var(--green) inset; }
     .provider-row input[type="checkbox"] {
-      margin: 0;
-      width: 1rem;
-      height: 1rem;
-      cursor: pointer;
-      accent-color: var(--accent);
+      margin: 0; width: 1rem; height: 1rem;
+      cursor: pointer; accent-color: var(--accent);
     }
-    .provider-icon {
-      font-size: 1.15rem;
-      width: 1.5rem;
-      text-align: center;
-    }
-    .provider-name {
-      flex: 1;
-      font-size: 0.9rem;
-      color: var(--text);
-    }
-    .provider-hosts {
-      font-size: 0.75rem;
-      color: var(--text-faint);
-    }
+    .provider-icon { font-size: 1.15rem; width: 1.5rem; text-align: center; }
+    .provider-name { flex: 1; font-size: 0.9rem; color: var(--text); }
+    .provider-hosts { font-size: 0.75rem; color: var(--text-faint); }
     .provider-dot {
-      width: 0.55rem;
-      height: 0.55rem;
-      border-radius: 50%;
-      background: var(--text-faint);
-      flex: 0 0 auto;
+      width: 0.55rem; height: 0.55rem; border-radius: 50%;
+      background: var(--text-faint); flex: 0 0 auto;
       transition: background 0.2s, box-shadow 0.2s;
     }
-    .provider-row.active .provider-dot {
-      background: var(--green);
-      box-shadow: 0 0 6px var(--green);
-    }
+    .provider-row.active .provider-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
     .provider-row.disabled { opacity: 0.55; }
-    .provider-row.disabled .provider-name {
-      text-decoration: line-through;
-      color: var(--text-dim);
-    }
+    .provider-row.disabled .provider-name { text-decoration: line-through; color: var(--text-dim); }
+
+    .moobot-body { display: block; }
+    body.moobot-hidden .moobot-body { display: none; }
   </style>
 </head>
-<body>
-  <h1>OBS WebSocket</h1>
-  <p class="h">В OBS включите WebSocket-сервер. Имя текстового источника — как в поле ниже.</p>
+<body class="mode-direct">
+  <h1>Режим подключения к OBS</h1>
+  <p class="h">Выберите, как трек будет попадать в OBS.</p>
+
+  <div class="card">
+    <div class="mode-row">
+      <label class="mode-opt" id="modeOptDirect">
+        <input type="radio" name="obsMode" value="direct" />
+        <div>
+          <div class="t">Прямой WebSocket</div>
+          <div class="d">Расширение стучится прямо в OBS WebSocket. Удобно локально.</div>
+        </div>
+      </label>
+      <label class="mode-opt" id="modeOptServer">
+        <input type="radio" name="obsMode" value="server" />
+        <div>
+          <div class="t">Через сервер</div>
+          <div class="d">OBS подгружает оверлей-страницу с нашего сервера — удобно для стрима с чужих машин.</div>
+        </div>
+      </label>
+    </div>
+  </div>
 
   <div class="card">
     <h2>Статус подключения</h2>
-    <div class="kv">Состояние: <span id="connState" class="state idle">Ожидание…</span></div>
+    <div class="kv">Состояние: <span id="connState" class="state idle">Ожидание…</span> <span class="chip" id="modeChip">—</span></div>
     <div class="kv h" id="connMessage"></div>
-    <div class="kv h">Цель: <span id="connTarget">—</span></div>
-    <div class="kv h">Источник: <span id="connInput">—</span></div>
-    <div class="kv h">Пароль в расширении: <span id="pwdConfigured">—</span></div>
+    <div class="kv h mode-section for-direct">Цель: <span id="connTarget">—</span></div>
+    <div class="kv h mode-section for-direct">Источник: <span id="connInput">—</span></div>
+    <div class="kv h mode-section for-direct">Пароль в расширении: <span id="pwdConfigured">—</span></div>
+    <div class="kv h mode-section for-server">Сервер: <span id="serverBase">—</span></div>
+    <div class="kv h mode-section for-server">Зрителей оверлея: <span id="serverSubs">0</span></div>
     <div class="kv h err" id="connError"></div>
     <button type="button" id="toggleEnabled">Отключить</button>
     <button type="button" id="reconnect">Переподключить</button>
+  </div>
+
+  <div class="card mode-section for-server">
+    <h2>Оверлей для OBS Browser Source</h2>
+    <p class="h">Вставьте ссылку в OBS → Источники → Браузер. Никому не показывайте её на стриме.</p>
+    <label>URL оверлея
+      <div class="copyRow">
+        <input id="overlayUrl" type="password" readonly autocomplete="off" />
+        <button type="button" data-copy="overlayUrl" title="Скопировать">Копировать</button>
+        <button type="button" id="revealOverlay" title="Показать/скрыть">Показать</button>
+      </div>
+    </label>
+    <p class="h" style="margin-top:0.6rem">При сбросе создаётся новая пара ID + ключ — предыдущая ссылка перестанет работать.</p>
+    <button type="button" id="rotateCreds" class="danger">Сбросить ID и ключ</button>
+  </div>
+
+  <div class="card mode-section for-server">
+    <h2>Внешний вид оверлея</h2>
+    <p class="h">Изменения применяются на подключённых оверлеях мгновенно — перезагружать источник в OBS не нужно.</p>
+
+    <div class="preview-frame" id="previewFrame">
+      <div class="preview-stage" id="previewStage">
+        <span class="dot"></span>
+        <span class="icon" id="previewIcon">&#9835;</span>
+        <span class="txt" id="previewText">Artist — Track</span>
+      </div>
+    </div>
+
+    <div class="overlay-grid">
+      <label class="toggle full">
+        <input type="checkbox" id="overlayShowBackground" />
+        <span>Показывать фон «пилюли»</span>
+      </label>
+
+      <label>Цвет фона
+        <div class="colorRow">
+          <input type="color" id="overlayBackgroundColorPicker" />
+          <input type="text"  id="overlayBackgroundColor" />
+        </div>
+      </label>
+      <label>Прозрачность фона
+        <div class="rangeRow">
+          <input type="range" id="overlayBackgroundAlpha" min="0" max="100" step="1" />
+          <span class="val" id="overlayBackgroundAlphaVal">66%</span>
+        </div>
+      </label>
+
+      <label>Цвет текста
+        <div class="colorRow">
+          <input type="color" id="overlayTextColorPicker" />
+          <input type="text"  id="overlayTextColor" />
+        </div>
+      </label>
+      <label>Радиус скругления
+        <div class="rangeRow">
+          <input type="range" id="overlayBorderRadius" min="0" max="999" step="1" />
+          <span class="val" id="overlayBorderRadiusVal">999px</span>
+        </div>
+      </label>
+
+      <label>Шрифт
+        <select id="overlayFontFamily">
+          <option value="system">Sans-serif (система)</option>
+          <option value="rounded">Rounded (закруглённый)</option>
+          <option value="serif">Serif (Georgia)</option>
+          <option value="mono">Monospace</option>
+          <option value="display">Display (Impact / Bebas)</option>
+        </select>
+      </label>
+      <label>Размер шрифта
+        <div class="rangeRow">
+          <input type="range" id="overlayFontSize" min="10" max="64" step="1" />
+          <span class="val" id="overlayFontSizeVal">22px</span>
+        </div>
+      </label>
+
+      <label class="toggle full">
+        <input type="checkbox" id="overlayShowProviderIcon" />
+        <span>Показывать иконку провайдера</span>
+      </label>
+      <label class="full">Стиль иконки
+        <select id="overlayProviderIconSource">
+          <option value="emoji">Эмодзи (🎵 🎧 …)</option>
+          <option value="favicon">Favicon сайта (music.yandex.ru, spotify, …)</option>
+        </select>
+      </label>
+
+      <label class="toggle full">
+        <input type="checkbox" id="overlayShowDot" />
+        <span>Показывать мигающую точку</span>
+      </label>
+    </div>
+
+    <div style="margin-top:0.9rem">
+      <button type="button" id="overlayReset" class="danger">Сбросить внешний вид</button>
+    </div>
+  </div>
+
+  <div class="card mode-section for-direct">
+    <h2>Настройки OBS WebSocket</h2>
+    <p class="h">В OBS включите WebSocket-сервер. Имя текстового источника — как в поле ниже.</p>
+    <label>Хост <input id="obsHost" type="text" autocomplete="off" /></label>
+    <label>Порт <input id="obsPort" type="number" min="1" max="65535" /></label>
+    <label>Пароль <input id="obsPassword" type="password" autocomplete="current-password" /></label>
+    <label>Имя текстового источника <input id="obsInputName" type="text" autocomplete="off" /></label>
   </div>
 
   <div class="card">
@@ -215,28 +399,33 @@
     <div class="providers" id="providers"></div>
   </div>
 
-  <label>Хост <input id="obsHost" type="text" autocomplete="off" /></label>
-  <label>Порт <input id="obsPort" type="number" min="1" max="65535" /></label>
-  <label>Пароль <input id="obsPassword" type="password" autocomplete="current-password" /></label>
-  <label>Имя текстового источника <input id="obsInputName" type="text" autocomplete="off" /></label>
-
   <h1 style="margin-top:1.5rem">Twitch Chat</h1>
   <p class="h">Анонимное чтение чата Twitch-канала (работает только на moo.bot).</p>
   <label>Канал <input id="twitchChannel" type="text" autocomplete="off" placeholder="channel_name" /></label>
 
-  <h1 style="margin-top:1.5rem">Голосование за скип (moo.bot)</h1>
-  <p class="h">Голоса считаются по одному на пользователя за текущий трек (при смене трека обнуляются). Сравнение регистрозависимое. Текст ищется как отдельное слово среди разделённых пробелами.</p>
-  <label>Ключевое слово / смайл для SKIP <input id="voteSkipKeyword" type="text" autocomplete="off" placeholder="skip" /></label>
-  <label>Ключевое слово / смайл для SAVE <input id="voteSaveKeyword" type="text" autocomplete="off" placeholder="ClippyJAM" /></label>
-  <label>Минимум голосов для скипа (net = skip − save) <input id="voteSkipThreshold" type="number" min="1" max="9999" /></label>
+  <div class="card" id="moobotCard">
+    <h2 style="display:flex;align-items:center;gap:0.6rem">
+      <span>Голосование за скип (moo.bot)</span>
+      <label class="toggle" style="margin-left:auto">
+        <input type="checkbox" id="moobotEnabled" />
+        <span>Показывать раздел</span>
+      </label>
+    </h2>
+    <div class="moobot-body">
+      <p class="h">Голоса считаются по одному на пользователя за текущий трек (при смене трека обнуляются). Сравнение регистрозависимое. Текст ищется как отдельное слово среди разделённых пробелами.</p>
+      <label>Ключевое слово / смайл для SKIP <input id="voteSkipKeyword" type="text" autocomplete="off" placeholder="skip" /></label>
+      <label>Ключевое слово / смайл для SAVE <input id="voteSaveKeyword" type="text" autocomplete="off" placeholder="ClippyJAM" /></label>
+      <label>Минимум голосов для скипа (net = skip − save) <input id="voteSkipThreshold" type="number" min="1" max="9999" /></label>
 
-  <label style="display:flex;align-items:center;gap:0.5rem;flex-direction:row;margin-top:0.9rem;font-weight:500;font-size:0.85rem;color:var(--text-dim);cursor:pointer">
-    <input type="checkbox" id="voteSkipByPercent" style="width:1rem;height:1rem;margin:0;flex:0 0 auto;accent-color:var(--accent);cursor:pointer" />
-    <span>Порог как % от зрителей Twitch</span>
-  </label>
-  <div id="skipPercentRow" style="display:none">
-    <label>Процент зрителей для скипа (%) <input id="voteSkipPercent" type="number" min="1" max="100" /></label>
-    <p class="h" id="viewersCountInfo" style="margin-top:0.4rem"></p>
+      <label class="toggle" style="margin-top:0.9rem">
+        <input type="checkbox" id="voteSkipByPercent" />
+        <span>Порог как % от зрителей Twitch</span>
+      </label>
+      <div id="skipPercentRow" style="display:none">
+        <label>Процент зрителей для скипа (%) <input id="voteSkipPercent" type="number" min="1" max="100" /></label>
+        <p class="h" id="viewersCountInfo" style="margin-top:0.4rem"></p>
+      </div>
+    </div>
   </div>
 
   <button type="button" id="save" class="primary">Сохранить</button>

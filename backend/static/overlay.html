@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Now Playing</title>
+  <style>
+    :root {
+      /* Defaults — overridden at runtime by `settings` messages from the
+         extension. Keep them sane so the overlay looks fine even before the
+         first settings frame arrives. */
+      --fg:         #ffffff;
+      --bg:         rgba(16, 18, 24, 0.66);
+      --bg-alpha:   0.66;
+      --shadow:     0 2px 4px rgba(0, 0, 0, 0.85), 0 0 12px rgba(0, 0, 0, 0.55);
+      --font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      --font-size:   22px;
+      --pad-x:       1.1rem;
+      --pad-y:       0.7rem;
+      --radius:      999px;
+      --dot:         #4ade80;
+      --gap:         0.75rem;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      color: var(--fg);
+      font-family: var(--font-family);
+      overflow: hidden;
+      height: 100%;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 1rem 1.5rem;
+      box-sizing: border-box;
+    }
+    .stage {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--gap);
+      max-width: calc(100vw - 3rem);
+      padding: var(--pad-y) var(--pad-x);
+      background: var(--bg);
+      border-radius: var(--radius);
+      font-size: var(--font-size);
+      font-weight: 500;
+      letter-spacing: 0.005em;
+      transition: opacity 180ms ease, transform 180ms ease;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+    }
+    body.no-bg .stage {
+      background: transparent !important;
+      box-shadow: none;
+      padding-left: 0;
+      padding-right: 0;
+      text-shadow: var(--shadow);
+    }
+    body.no-icon .icon { display: none; }
+    body.no-dot  .dot  { display: none; }
+
+    .dot {
+      width: 0.6rem;
+      height: 0.6rem;
+      border-radius: 50%;
+      background: var(--dot);
+      box-shadow: 0 0 10px var(--dot);
+      flex: 0 0 auto;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    .icon {
+      font-size: 1.05em;
+      flex: 0 0 auto;
+      opacity: 0.95;
+    }
+    .lines {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+      gap: 0.15em;
+    }
+    .marquee {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      max-width: calc(100vw - 11rem);
+    }
+    .marquee .track {
+      display: inline-block;
+      padding-right: 2rem;
+    }
+    .marquee.scrolling .track {
+      animation: marquee var(--marquee-duration, 18s) linear infinite;
+    }
+    .sub {
+      display: block;
+      font-size: 0.72em;
+      opacity: 0.82;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: calc(100vw - 11rem);
+      font-weight: 400;
+      letter-spacing: 0.01em;
+    }
+    .sub:empty { display: none; }
+
+    .stage.enter { opacity: 0; transform: translateY(6px); }
+    .stage.show  { opacity: 1; transform: translateY(0); }
+    .stage.empty { opacity: 0; }
+
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.55; transform: scale(0.82); }
+    }
+
+    .debug {
+      position: fixed;
+      right: 0.6rem;
+      bottom: 0.4rem;
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.72);
+      text-shadow: var(--shadow);
+      pointer-events: none;
+      user-select: none;
+      opacity: 0;
+      transition: opacity 120ms ease;
+    }
+    body.debug .debug { opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <div id="stage" class="stage empty">
+    <span class="dot" aria-hidden="true"></span>
+    <span class="icon" id="icon">&#9835;</span>
+    <div class="lines">
+      <span class="marquee" id="marquee"><span class="track" id="track"></span></span>
+      <span class="sub" id="sub"></span>
+    </div>
+  </div>
+  <div class="debug" id="debug"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  const ROOM_ID = "__ROOM_ID__";
+  const params = new URLSearchParams(location.search);
+  if (params.has("debug")) document.body.classList.add("debug");
+
+  const stage = document.getElementById("stage");
+  const dbg = document.getElementById("debug");
+  const trackEl = document.getElementById("track");
+  const iconEl  = document.getElementById("icon");
+  const marquee = document.getElementById("marquee");
+  const subEl   = document.getElementById("sub");
+
+  // providerId → emoji shown when the user picked "emoji" icon style, or
+  // when favicon loading fails. Keys match the ids emitted by providers.js.
+  const PROVIDER_ICON = {
+    ym:    "\ud83c\udfb5",
+    yt:    "\ud83d\udcfa",
+    sptf:  "\ud83c\udfa7",
+    vk:    "\ud83d\udcac",
+    sc:    "\ud83e\udde1",
+    rr:    "\ud83d\udcfb",
+    mb:    "\ud83d\udc2e",
+    hobot: "\ud83e\udd16",
+    se:    "\u2728",
+    da:    "\ud83d\udc96",
+  };
+
+  // providerId → primary host used to fetch a favicon. A separate map keeps
+  // this overlay self-contained; if you add a new provider, add its host
+  // here too.
+  const PROVIDER_HOST = {
+    ym:    "music.yandex.ru",
+    yt:    "music.youtube.com",
+    sptf:  "open.spotify.com",
+    vk:    "vk.com",
+    sc:    "soundcloud.com",
+    rr:    "radiorecord.ru",
+    mb:    "moo.bot",
+    hobot: "hobot.alwaysdata.net",
+    se:    "streamelements.com",
+    da:    "donationalerts.com",
+  };
+
+  function providerEmoji(id) {
+    if (!id) return "\ud83c\udfb5";
+    return PROVIDER_ICON[String(id).toLowerCase()] || "\ud83c\udfb5";
+  }
+
+  function providerHost(id) {
+    if (!id) return "";
+    return PROVIDER_HOST[String(id).toLowerCase()] || "";
+  }
+
+  function providerFaviconUrl(id) {
+    const host = providerHost(id);
+    if (!host) return "";
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`;
+  }
+
+  // Sanitize color strings from settings to something CSS will accept without
+  // letting an attacker break out of the style attribute. We restrict to
+  // #rgb/#rrggbb/#rrggbbaa and rgb()/rgba() with numeric arguments.
+  function sanitizeColor(v, fallback) {
+    if (typeof v !== "string") return fallback;
+    const s = v.trim();
+    if (/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(s)) return s;
+    if (/^rgba?\(\s*\d+(\s*,\s*\d+){2}(\s*,\s*(0|1|0?\.\d+))?\s*\)$/i.test(s)) return s;
+    return fallback;
+  }
+
+  const FONT_STACKS = {
+    system:   '"Inter","Segoe UI",system-ui,-apple-system,sans-serif',
+    rounded:  '"SF Pro Rounded","Segoe UI Variable","Segoe UI",system-ui,sans-serif',
+    serif:    'Georgia,"Times New Roman",serif',
+    mono:     'ui-monospace,SFMono-Regular,Menlo,Consolas,"JetBrains Mono",monospace',
+    display:  '"Bebas Neue","Impact","Oswald","Arial Narrow",sans-serif',
+  };
+
+  const DEFAULT_SETTINGS = {
+    showBackground:      true,
+    backgroundColor:     "#101218",
+    backgroundAlpha:     0.66,
+    textColor:           "#ffffff",
+    fontFamily:          "system",
+    fontSize:            22,
+    showProviderIcon:    true,
+    providerIconSource:  "emoji",   // "emoji" | "favicon"
+    showDot:             true,
+    borderRadius:        999,
+  };
+
+  let currentSettings = { ...DEFAULT_SETTINGS };
+  // Declared up here so applySettings() (which re-renders the icon) can read
+  // the last known provider before the first track frame arrives.
+  let currentText = null;
+  let currentProv = null;
+
+  // Convert #rrggbb + alpha (0..1) into rgba().
+  function composeBg(hex, alpha) {
+    const h = sanitizeColor(hex, "#101218").replace("#", "");
+    const bigint = parseInt(h.length === 3
+      ? h.split("").map((c) => c + c).join("")
+      : h.substring(0, 6), 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    const a = Math.max(0, Math.min(1, Number(alpha)));
+    return `rgba(${r}, ${g}, ${b}, ${Number.isFinite(a) ? a : 0.66})`;
+  }
+
+  function applySettings(patch) {
+    if (patch && typeof patch === "object") {
+      currentSettings = { ...currentSettings, ...patch };
+    }
+    const s = currentSettings;
+    const root = document.documentElement;
+
+    root.style.setProperty("--fg", sanitizeColor(s.textColor, "#ffffff"));
+    root.style.setProperty("--bg", composeBg(s.backgroundColor, s.backgroundAlpha));
+    const size = Math.max(8, Math.min(128, Number(s.fontSize) || DEFAULT_SETTINGS.fontSize));
+    root.style.setProperty("--font-size", size + "px");
+    const stack = FONT_STACKS[String(s.fontFamily || "system").toLowerCase()] || FONT_STACKS.system;
+    root.style.setProperty("--font-family", stack);
+    const radius = Math.max(0, Math.min(999, Number(s.borderRadius) ?? DEFAULT_SETTINGS.borderRadius));
+    root.style.setProperty("--radius", radius + "px");
+
+    document.body.classList.toggle("no-bg", s.showBackground === false);
+    document.body.classList.toggle("no-icon", s.showProviderIcon === false);
+    document.body.classList.toggle("no-dot", s.showDot === false);
+
+    // Re-render the icon so a source change takes effect without waiting
+    // for the next track update.
+    renderIcon(currentProv);
+  }
+
+  applySettings();
+
+  // ------------- track rendering -------------
+
+  function escapeHtml(v) {
+    return String(v)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  }
+
+  // Fills #icon with either an emoji (text) or a favicon <img>, falling back
+  // to the emoji silently when the image can't be loaded (offline, domain
+  // blocked, etc.).
+  function renderIcon(providerId) {
+    iconEl.innerHTML = "";
+    const source = String(currentSettings.providerIconSource || "emoji").toLowerCase();
+    const emoji = providerEmoji(providerId);
+    if (source === "favicon") {
+      const url = providerFaviconUrl(providerId);
+      if (url) {
+        const img = document.createElement("img");
+        img.src = url;
+        img.alt = "";
+        img.decoding = "async";
+        img.referrerPolicy = "no-referrer";
+        img.style.width = "1em";
+        img.style.height = "1em";
+        img.style.verticalAlign = "-0.15em";
+        img.style.borderRadius = "3px";
+        img.onerror = () => { iconEl.textContent = emoji; };
+        iconEl.appendChild(img);
+        return;
+      }
+    }
+    iconEl.textContent = emoji;
+  }
+
+  function renderTrack(text, providerId) {
+    text = String(text || "").replace(/\r\n?/g, "\n");
+    providerId = providerId || "";
+    // We intentionally trim each line separately so indentation in the source
+    // text doesn't leak into the overlay, but we don't collapse them — moo.bot
+    // uses "\n" to separate the track title from the vote counter and we want
+    // that as a visible second line.
+    const lines = text.split("\n").map((s) => s.trim()).filter(Boolean);
+    const head = lines.shift() || "";
+    const sub  = lines.join(" \u2022 ");
+    const joined = head + (sub ? "\n" + sub : "");
+    if (joined === currentText && providerId === currentProv) return;
+
+    currentText = joined;
+    currentProv = providerId;
+
+    stage.classList.remove("show");
+    stage.classList.add("enter");
+
+    if (!head) {
+      trackEl.textContent = "";
+      subEl.textContent = "";
+      marquee.classList.remove("scrolling");
+      requestAnimationFrame(() => {
+        stage.classList.remove("enter");
+        stage.classList.add("empty");
+      });
+      return;
+    }
+
+    stage.classList.remove("empty");
+    renderIcon(providerId);
+    trackEl.textContent = head;
+    subEl.textContent = sub;
+
+    requestAnimationFrame(() => {
+      if (trackEl.scrollWidth > marquee.clientWidth + 4) {
+        trackEl.innerHTML =
+          escapeHtml(head) +
+          '<span style="display:inline-block;width:2rem"></span>' +
+          escapeHtml(head);
+        const pxPerSec = 70;
+        const dur = Math.max(10, Math.round(trackEl.scrollWidth / pxPerSec));
+        marquee.style.setProperty("--marquee-duration", dur + "s");
+        marquee.classList.add("scrolling");
+      } else {
+        marquee.classList.remove("scrolling");
+      }
+      stage.classList.remove("enter");
+      stage.classList.add("show");
+    });
+  }
+
+  function logDbg(text) { dbg.textContent = text; }
+
+  // ------------- WebSocket lifecycle -------------
+
+  const wsProto = location.protocol === "https:" ? "wss:" : "ws:";
+  const wsUrl = `${wsProto}//${location.host}/ws/sub/${encodeURIComponent(ROOM_ID)}`;
+
+  let ws = null;
+  let retryAttempt = 0;
+  let retryTimer = null;
+
+  function connect() {
+    try { ws = new WebSocket(wsUrl); }
+    catch (e) { logDbg("ws error: " + e.message); scheduleReconnect(); return; }
+
+    ws.onopen = () => { retryAttempt = 0; logDbg("connected"); };
+
+    ws.onmessage = (ev) => {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch { return; }
+      if (!msg || typeof msg !== "object") return;
+      if (msg.type === "song")     renderTrack(msg.text || "", msg.providerId || "");
+      else if (msg.type === "clear") renderTrack("", "");
+      else if (msg.type === "settings") applySettings(msg.settings || msg);
+    };
+
+    ws.onclose = () => { logDbg("closed, reconnecting"); scheduleReconnect(); };
+    ws.onerror = () => { logDbg("error"); try { ws.close(); } catch {} };
+  }
+
+  function scheduleReconnect() {
+    if (retryTimer) return;
+    retryAttempt = Math.min(retryAttempt + 1, 6);
+    const delay = Math.min(15000, 500 * Math.pow(2, retryAttempt));
+    retryTimer = setTimeout(() => { retryTimer = null; connect(); }, delay);
+  }
+
+  connect();
+  logDbg(`ready id=${ROOM_ID}`);
+})();
+</script>
+</body>
+</html>
