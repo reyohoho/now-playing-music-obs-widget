@@ -114,7 +114,7 @@ function sendMooBotToObs(song) {
 
 function getNowPlayingMB() {
     try {
-        const iframe = document.querySelector('iframe');
+        const iframe = document.querySelector('iframe.moobot-songrequest-player') || document.querySelector('iframe#widget2') || document.querySelector('iframe');
         const song = iframe?.getAttribute('title');
         if (song) {
             if (typeof onMooBotTrackTick === "function") onMooBotTrackTick(song);
