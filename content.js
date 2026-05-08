@@ -70,25 +70,55 @@ let mbTrackSince = 0;
 let mbTrackReady = false;
 let mbLastSentLine = "";
 
+// Latest requester data fetched from moo.bot's songrequests API. The title
+// is kept so we don't display a stale "by <user>" suffix from a previous
+// track during the small window between an iframe.title change and the
+// next successful API refresh.
+let mbApiRequester = null;
+let mbApiTitle = "";
+// Assigned inside the moo.bot block (when this content script runs there).
+// Allows the generic track-change handler to trigger an immediate API poll.
+var requestMooBotApiRefresh = null;
+
+function mbNormalizeTitle(s) {
+    return (s || "")
+        .toLowerCase()
+        .replace(/[\s\-—–_,.!?:;'"`«»()\[\]]+/g, " ")
+        .trim();
+}
+
 function mbOnTrackTick(song) {
     if (song !== mbLastTrack) {
         mbLastTrack = song;
         mbTrackSince = Date.now();
         mbTrackReady = false;
+        // Invalidate the cached requester as soon as the track changes so
+        // we don't keep showing the previous song's nickname while waiting
+        // for the API.
+        mbApiRequester = null;
+        mbApiTitle = "";
+        if (typeof requestMooBotApiRefresh === "function") {
+            requestMooBotApiRefresh();
+        }
     }
 }
 
 function buildMooBotLine(song) {
     const pct = getMooBotProgressPercent();
-    // const requester = getMooBotRequesterNick();
+    const requester =
+        mbApiRequester &&
+        mbApiTitle &&
+        mbNormalizeTitle(mbApiTitle) === mbNormalizeTitle(song)
+            ? mbApiRequester
+            : null;
     let body = song;
     if (pct != null) body += ` (${pct}%)`;
-    // if (requester) body += ` by ${requester}`;
+    if (requester) body += ` by ${requester}`;
     const label = typeof getMooBotVoteLabel === "function" ? getMooBotVoteLabel() : "";
     return {
         line: label ? `${body}\n${label}` : body,
         pct,
-        // requester,
+        requester,
     };
 }
 
@@ -554,6 +584,107 @@ if (location.hostname === "moo.bot") {
             console.log("IDDQD", "twitch: ws error", e);
         };
     }
+
+    // --- moo.bot song requests API poll ---
+    // Polls https://moo.bot/a/1/channel/features/songrequests every 10s
+    // (and immediately on track change) to keep the requester nickname
+    // shown in the OBS overlay in sync with what moo.bot has queued.
+    const MB_API_URL = "https://moo.bot/a/1/channel/features/songrequests";
+    const MB_API_POLL_MS = 10000;
+    const MB_API_REFRESH_DEBOUNCE_MS = 200;
+    let mbApiPollTimer = null;
+    let mbApiInFlight = false;
+
+    function getMooBotApiToken() {
+        try {
+            return localStorage.getItem("moobot.twitch.user.token") || "";
+        } catch (_) {
+            return "";
+        }
+    }
+
+    function getMooBotApiChannel() {
+        try {
+            const fromWin = window.moobotChannelId || window.MOOBOT_CHANNEL_ID;
+            if (fromWin) return String(fromWin);
+            const fromLs =
+                localStorage.getItem("moobot.twitch.user.id") ||
+                localStorage.getItem("moobot.channel.id");
+            if (fromLs) return String(fromLs);
+        } catch (_) {}
+        return "";
+    }
+
+    function scheduleMooBotApiPoll(delayMs) {
+        clearTimeout(mbApiPollTimer);
+        mbApiPollTimer = setTimeout(pollMooBotSongRequestsApi, delayMs);
+    }
+
+    async function pollMooBotSongRequestsApi() {
+        clearTimeout(mbApiPollTimer);
+        if (mbApiInFlight) {
+            scheduleMooBotApiPoll(MB_API_POLL_MS);
+            return;
+        }
+        mbApiInFlight = true;
+        try {
+            const token = getMooBotApiToken();
+            if (!token) {
+                console.log("IDDQD", "mb-api: no token in localStorage[moobot.twitch.user.token]");
+                return;
+            }
+            const channel = getMooBotApiChannel();
+            if (!channel) {
+                console.log(
+                    "IDDQD",
+                    "mb-api: no channel id (tried window.moobotChannelId, localStorage[moobot.twitch.user.id], localStorage[moobot.channel.id])"
+                );
+                return;
+            }
+            const res = await fetch(MB_API_URL, {
+                method: "POST",
+                headers: {
+                    accept: "application/json",
+                    authorization: "Token " + token,
+                    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                },
+                body: "channel=" + encodeURIComponent(channel),
+                credentials: "include",
+            });
+            const text = await res.text();
+            let data = null;
+            try { data = JSON.parse(text); } catch (_) {}
+            const cur = data?.item?.current;
+            const st = data?.item?.state;
+            if (cur) {
+                const nextNick = cur.by?.username || null;
+                const nextTitle = cur.title || "";
+                const changed = nextNick !== mbApiRequester || nextTitle !== mbApiTitle;
+                mbApiRequester = nextNick;
+                mbApiTitle = nextTitle;
+                console.log(
+                    "IDDQD",
+                    `mb-api: status=${res.status} channel=${channel} state=${st?.state} title="${nextTitle}" by=${nextNick} yt=${cur.youtube_id} len=${cur.length}s`
+                );
+                if (changed) {
+                    pushMooBotLineToObs();
+                }
+            } else {
+                console.log("IDDQD", `mb-api: status=${res.status} channel=${channel} body=${text.slice(0, 300)}`);
+            }
+        } catch (e) {
+            console.log("IDDQD", "mb-api: error", e);
+        } finally {
+            mbApiInFlight = false;
+            scheduleMooBotApiPoll(MB_API_POLL_MS);
+        }
+    }
+
+    requestMooBotApiRefresh = function () {
+        scheduleMooBotApiPoll(MB_API_REFRESH_DEBOUNCE_MS);
+    };
+
+    scheduleMooBotApiPoll(500);
 
     chrome.storage.local.get({ twitchViewersCount: 0 }, (loc) => {
         twitchViewersCount = Number(loc.twitchViewersCount) || 0;
